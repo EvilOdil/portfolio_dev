@@ -1,45 +1,39 @@
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Text } from '@react-three/drei';
 import { PortfolioSection } from '../types';
 
-interface ZoneProps {
-  data: PortfolioSection;
+// --- Modular Asset Components ---
+
+interface ZoneModelProps {
+  color: string;
+  offset: number; // Used to desync animations based on position
 }
 
-export const Zone: React.FC<ZoneProps> = ({ data }) => {
+/**
+ * DefaultZoneModel: The standard floating box representation.
+ * Can be replaced or supplemented by other components like <ServerRackZone />, <RoboticArmZone />, etc.
+ */
+const DefaultZoneModel: React.FC<ZoneModelProps> = ({ color, offset }) => {
   const meshRef = useRef<any>(null);
   
   useFrame((state) => {
     if (meshRef.current) {
       // Gentle floating animation
-      meshRef.current.position.y = 1.5 + Math.sin(state.clock.elapsedTime + data.position[0]) * 0.2;
+      // Using offset to ensure all boxes don't float in perfect sync
+      meshRef.current.position.y = 3.5 + Math.sin(state.clock.elapsedTime + offset) * 0.2;
       meshRef.current.rotation.y += 0.01;
       meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
     }
   });
 
   return (
-    <group position={data.position}>
-      {/* Floating Label */}
-      <Text
-        position={[0, 5, 0]}
-        fontSize={1.5}
-        color={data.color}
-        anchorX="center"
-        anchorY="middle"
-        outlineWidth={0.05}
-        outlineColor="#000000"
-      >
-        {data.title.toUpperCase()}
-      </Text>
-
+    <group>
       {/* The Box */}
-      <mesh ref={meshRef} position={[0, 1.5, 0]} castShadow>
+      <mesh ref={meshRef} position={[0, 3.5, 0]} castShadow>
         <boxGeometry args={[4, 4, 4]} />
         <meshStandardMaterial 
-          color={data.color} 
-          emissive={data.color}
+          color={color} 
+          emissive={color}
           emissiveIntensity={0.5}
           transparent
           opacity={0.8}
@@ -51,11 +45,38 @@ export const Zone: React.FC<ZoneProps> = ({ data }) => {
       {/* Ground marker */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
         <ringGeometry args={[3, 3.5, 32]} />
-        <meshBasicMaterial color={data.color} />
+        <meshBasicMaterial color={color} />
       </mesh>
       
       {/* Light for this zone */}
-      <pointLight position={[0, 5, 0]} distance={15} intensity={2} color={data.color} />
+      <pointLight position={[0, 5, 0]} distance={15} intensity={2} color={color} />
+    </group>
+  );
+};
+
+// --- Main Zone Container ---
+
+interface ZoneProps {
+  data: PortfolioSection;
+}
+
+export const Zone: React.FC<ZoneProps> = ({ data }) => {
+  // Logic to select specific 3D assets based on data.modelType
+  const renderZoneContent = () => {
+    switch (data.modelType) {
+      // Example for future expansion:
+      // case 'server-rack': return <ServerRackModel color={data.color} offset={data.position[0]} />;
+      // case 'robot-arm': return <RobotArmModel color={data.color} offset={data.position[0]} />;
+      
+      case 'default':
+      default:
+        return <DefaultZoneModel color={data.color} offset={data.position[0]} />;
+    }
+  };
+
+  return (
+    <group position={data.position}>
+      {renderZoneContent()}
     </group>
   );
 };

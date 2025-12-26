@@ -1,3 +1,4 @@
+
 export interface CarControls {
   forward: boolean;
   backward: boolean;
@@ -22,10 +23,11 @@ export interface PortfolioSection {
   color: string;
   position: [number, number, number];
   items: PortfolioItem[];
+  modelType?: string; // Identifier for custom 3D assets (e.g., 'default', 'server', 'robot')
 }
 
 export enum CarColor {
-  NEON_BLUE = '#00f3ff',
-  NEON_PINK = '#ff00ff',
+  SAFETY_YELLOW = '#F2C94C',
+  CARBON_FIBER = '#1a1a1a',
   DARK_METAL = '#222222'
 }

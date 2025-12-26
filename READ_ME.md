@@ -1,32 +1,51 @@
-To add custom 3D worlds and assets to your application, you need to move from "procedural" geometry (placing code-generated boxes and cylinders) to "imported" assets (loading 3D models created by artists).
-Here is the professional workflow for adding custom assets to a React Three Fiber project:
-Step 1: Get the Assets (.glb format)
-You need 3D models. The web standard is glTF (specifically binary .glb) because it is small and efficient.
-Source: Download low-poly assets from sites like Itch.io, Kenney.nl, or Sketchfab.
-Create: Use Blender to model your factory, then export as .glb.
-Step 2: Convert to React Components (The "Secret Weapon")
-Don't just load the file; turn it into a declarative React component. This allows you to easily change colors, shadows, or hide parts of the model using code.
-Place your model.glb file in your public/ folder.
-Run this command in your terminal:
-code
-Bash
-npx gltfjsx public/model.glb --types
-This generates a Model.tsx file.
-Step 3: Use the Component
-The generated file will look something like this. You can drop it straight into your <Canvas>:
-code
-Tsx
-// Generated Model.tsx
-import { useGLTF } from '@react-three/drei'
+# Odil's Portfolio World
 
-export function FactoryModel(props) {
-  const { nodes, materials } = useGLTF('/model.glb')
-  return (
-    <group {...props} dispose={null}>
-      <mesh geometry={nodes.Building.geometry} material={materials.Concrete} />
-    </group>
-  )
-}
-Step 4: Handle Async Loading (Crucial)
-3D models are large files. React will crash if you try to render them before they download unless you wrap your scene in a <Suspense>.
-I will update your App.tsx to include Suspense and a standard Loading screen (Loader), so your app is ready for custom assets immediately.
+An interactive 3D portfolio where you control a robotic dog to explore projects, experience, and skills in a futuristic factory environment.
+
+## 🚀 Local Setup Guide
+
+Follow these instructions to run the project on your local machine.
+
+### Prerequisites
+1. **Node.js**: Install Node.js (version 18 or higher) from [nodejs.org](https://nodejs.org/).
+
+### Installation
+
+1.  **Open your terminal** and navigate to this project folder.
+2.  **Install dependencies** using npm:
+    ```bash
+    npm install
+    ```
+
+### Configuration (API Key)
+
+This project uses Google's Gemini API for dynamic commentary.
+1.  Create a file named `.env` in the root directory.
+2.  Add your API key to it:
+    ```env
+    API_KEY=your_google_genai_api_key_here
+    ```
+
+### Running the App
+
+1.  **Start the development server**:
+    ```bash
+    npm run dev
+    ```
+2.  Open your browser and navigate to the local URL shown in the terminal (usually `http://localhost:5173`).
+
+---
+
+## 🛠 Project Structure
+
+- **package.json**: Lists all the libraries and tools required (React, Three.js, Vite).
+- **vite.config.ts**: Settings for the build tool.
+- **components/**: Contains the 3D objects (RoboticDog, FactoryWorld, Zones).
+- **models/**: Place your `.glb` 3D files in `public/models/`.
+
+## 📦 Adding Custom Models
+
+To replace the robot or factory with your own 3D models:
+1. Place your `.glb` file in the `public/models/` folder.
+2. Update the filename reference in `components/RoboticDog.tsx` or `components/FactoryWorld.tsx`.
+3. If the model is complex, consider using [gltfjsx](https://github.com/pmndrs/gltfjsx) to generate a React component for it.

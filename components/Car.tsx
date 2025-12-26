@@ -197,18 +197,22 @@ export const Car: React.FC<CarProps> = ({ onSpeedChange, positionRef }) => {
     // Initial position raised to 10 to ensure we drop ONTO the floor, not inside it
     <group ref={groupRef} position={[0, RESPAWN_HEIGHT, 0]}>
       <group>
-        {/* Chassis */}
+        {/* Chassis - Industrial Design */}
         <mesh castShadow receiveShadow position={[0, 0.3, 0]}>
             <boxGeometry args={[1.8, 0.5, 4]} />
-            <meshStandardMaterial color={CarColor.NEON_BLUE} roughness={0.2} metalness={0.8} />
+            <meshStandardMaterial color={CarColor.CARBON_FIBER} roughness={0.7} metalness={0.4} />
         </mesh>
+        
+        {/* Cabin Area */}
         <mesh castShadow position={[0, 0.8, -0.5]}>
             <boxGeometry args={[1.4, 0.6, 2]} />
-            <meshStandardMaterial color={CarColor.DARK_METAL} roughness={0.1} metalness={0.9} />
+            <meshStandardMaterial color={CarColor.DARK_METAL} roughness={0.5} metalness={0.8} />
         </mesh>
+        
+        {/* Spoiler / Aero - Safety Yellow */}
         <mesh castShadow position={[0, 0.8, 1.8]}>
             <boxGeometry args={[2, 0.1, 0.5]} />
-            <meshStandardMaterial color={CarColor.NEON_PINK} />
+            <meshStandardMaterial color={CarColor.SAFETY_YELLOW} roughness={0.2} />
         </mesh>
 
         <Wheel position={[-1, 0, 1.2]} rotation={wheelRotation} />
@@ -216,18 +220,20 @@ export const Car: React.FC<CarProps> = ({ onSpeedChange, positionRef }) => {
         <Wheel position={[-1, 0, -1.2]} rotation={wheelRotation} />
         <Wheel position={[1, 0, -1.2]} rotation={wheelRotation} />
 
-        {/* Lights */}
+        {/* Headlights (White LED) */}
         <mesh position={[-0.6, 0.3, -2.01]}>
             <planeGeometry args={[0.5, 0.2]} />
-            <meshBasicMaterial color="#ffffff" />
+            <meshBasicMaterial color="#ffffff" toneMapped={false} />
         </mesh>
         <mesh position={[0.6, 0.3, -2.01]}>
             <planeGeometry args={[0.5, 0.2]} />
-            <meshBasicMaterial color="#ffffff" />
+            <meshBasicMaterial color="#ffffff" toneMapped={false} />
         </mesh>
+        
+        {/* Taillights (Red LED) */}
         <mesh position={[0, 0.4, 2.01]} rotation={[0, Math.PI, 0]}>
-            <planeGeometry args={[1.6, 0.2]} />
-            <meshBasicMaterial color="#ff0000" />
+            <planeGeometry args={[1.6, 0.1]} />
+            <meshBasicMaterial color="#ff0000" toneMapped={false} />
         </mesh>
       </group>
     </group>
@@ -243,7 +249,12 @@ const Wheel: React.FC<{ position: [number, number, number], rotation: React.Muta
     <group position={position}>
       <mesh ref={meshRef} castShadow rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[0.4, 0.4, 0.4, 16]} />
-        <meshStandardMaterial color="#333" />
+        <meshStandardMaterial color="#222" roughness={0.9} />
+      </mesh>
+      {/* Hubcap detail */}
+      <mesh rotation={[0, 0, Math.PI / 2]} position={[position[0] > 0 ? 0.21 : -0.21, 0, 0]}>
+         <cylinderGeometry args={[0.2, 0.2, 0.05, 8]} />
+         <meshStandardMaterial color="#555" metalness={0.8} />
       </mesh>
     </group>
   );

@@ -3,9 +3,9 @@ import { PortfolioSection } from '../types';
 export const PORTFOLIO_DATA: PortfolioSection[] = [
   {
     id: 'summary',
-    title: 'About Odil',
-    color: '#00f3ff',
-    position: [0, 0, -40],
+    title: 'Profile Data',
+    color: '#F2C94C', // Safety Yellow
+    position: [0, 4, -40],
     items: [
       {
         title: 'Odil Janandith',
@@ -21,9 +21,9 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
   },
   {
     id: 'projects',
-    title: 'Projects',
-    color: '#ff00ff',
-    position: [40, 0, 0],
+    title: 'Project Logs',
+    color: '#E0E0E0', // Off-White (High Contrast)
+    position: [0, 2.5, -5],
     items: [
       {
         title: 'Obo Mouse v1.0, v2.0',
@@ -56,9 +56,9 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
   },
   {
     id: 'experience',
-    title: 'Experience',
-    color: '#ffff00',
-    position: [-40, 0, 0],
+    title: 'Career History',
+    color: '#FF8800', // Warning Orange
+    position: [-40, 4, 0],
     items: [
       {
         title: 'Chief Technology Officer',
@@ -84,9 +84,9 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
   },
   {
     id: 'skills',
-    title: 'Skills & Tech',
-    color: '#00ff00',
-    position: [0, 0, 40],
+    title: 'Tech Stack',
+    color: '#00A3FF', // Tech Blue (Muted)
+    position: [0, 2, 40],
     items: [
       {
         title: 'Technical Stack',
@@ -104,9 +104,9 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
   },
   {
     id: 'achievements',
-    title: 'Achievements',
-    color: '#ff8800',
-    position: [30, 0, 30],
+    title: 'Awards',
+    color: '#FFFFFF', // Pure White
+    position: [30, 2, 30],
     items: [
       {
         title: 'Champions - SPARK Challenge',
@@ -133,8 +133,8 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
   {
     id: 'education',
     title: 'Education',
-    color: '#ffffff',
-    position: [-30, 0, 30],
+    color: '#A0A0A0', // Muted Grey
+    position: [-50, 4, 30],
     items: [
       {
         title: 'University of Moratuwa',

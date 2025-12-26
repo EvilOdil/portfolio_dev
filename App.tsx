@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Stars, Loader } from '@react-three/drei';
 import { Vector3 } from 'three';
-import { Car } from './components/Car';
+// import { Car } from './components/Car'; // Car is kept in file system but not used
 import { Zone } from './components/Zone';
 import { UIOverlay } from './components/UIOverlay';
 import { FactoryWorld } from './components/FactoryWorld';
+import { RoboticDog } from './components/RoboticDog';
 import { PORTFOLIO_DATA } from './services/portfolioData';
 import { PortfolioSection } from './types';
 
@@ -41,8 +42,8 @@ const App: React.FC = () => {
   const [nearbyZone, setNearbyZone] = useState<PortfolioSection | null>(null);
   const [activeZone, setActiveZone] = useState<PortfolioSection | null>(null);
   
-  // Shared reference for car position to avoid react re-renders on every frame
-  const carPositionRef = useRef<Vector3>(new Vector3(0, 0, 0));
+  // Shared reference for position (now tracks the Dog)
+  const positionRef = useRef<Vector3>(new Vector3(0, 0, 0));
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -59,25 +60,25 @@ const App: React.FC = () => {
 
   return (
     <div className="relative w-full h-full bg-gray-900">
-      <Canvas shadows camera={{ position: [0, 5, 10], fov: 50, near: 0.1, far: 1000 }} dpr={[1, 1.5]}>
+      <Canvas shadows camera={{ position: [0, 20, -75], fov: 50, near: 0.1, far: 1000 }} dpr={[1, 1.5]}>
         {/* Environment - Dark Industrial Factory */}
-        <color attach="background" args={['#0a0a10']} />
-        {/* Haze/Smog */}
-        <fog attach="fog" args={['#0a0a10', 10, 120]} />
+        <color attach="background" args={['#111']} />
+        <fog attach="fog" args={['#111', 10, 150]} />
         
-        <ambientLight intensity={0.5} />
-        {/* Main moon/flood light */}
+        {/* 
+            Lighting Configuration: AMBIENT MODE
+            - High ambient light for visibility
+            - Soft directional light for minimal shadows
+        */}
+        <ambientLight intensity={1.5} />
         <directionalLight 
-          position={[50, 100, 25]} 
-          intensity={1.2} 
+          position={[50, 80, 50]} 
+          intensity={0.8} 
           castShadow 
-          shadow-mapSize={[2048, 2048]} 
-          shadow-bias={-0.0005} // Fixes shadow acne/glitching on floor
-          color="#ccddee"
+          shadow-mapSize={[1024, 1024]} 
         />
 
-        {/* Debug Helper: Red=X, Green=Y, Blue=Z */}
-        <axesHelper args={[5]} position={[0, 0.1, 0]} />
+        {/* Removed axesHelper to eliminate the vertical line glitch */}
         
         <Suspense fallback={null}>
           <Stars radius={150} depth={50} count={2000} factor={4} saturation={0} fade speed={0.5} />
@@ -90,13 +91,22 @@ const App: React.FC = () => {
             <Zone key={zone.id} data={zone} />
           ))}
 
-          <Car 
-            onSpeedChange={setSpeed} 
-            positionRef={carPositionRef}
+          {/* 
+             Robotic Dog is now the player avatar.
+             Controlled via keyboard, updates positionRef.
+             Start at Y=10 to drop safely.
+             Moved Z to -60 (Opposite side, double distance of previous 30).
+          */}
+          <RoboticDog 
+            position={[5, 10, -85]} 
+            rotation={[0, Math.PI, 0]} 
+            scale={2.2} 
+            onSpeedChange={setSpeed}
+            positionRef={positionRef}
           />
 
           <InteractionManager 
-            carPositionRef={carPositionRef} 
+            carPositionRef={positionRef} 
             onZoneNearby={setNearbyZone} 
           />
         </Suspense>
@@ -109,7 +119,6 @@ const App: React.FC = () => {
         nearbyZone={nearbyZone}
         activeZone={activeZone}
         onClose={() => setActiveZone(null)}
-        carPositionRef={carPositionRef}
       />
     </div>
   );
