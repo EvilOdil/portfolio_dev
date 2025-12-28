@@ -7,6 +7,7 @@ import { Zone } from './components/Zone';
 import { UIOverlay } from './components/UIOverlay';
 import { FactoryWorld } from './components/FactoryWorld';
 import { RoboticDog } from './components/RoboticDog';
+import { TerminalLanding } from './components/TerminalLanding';
 import { PORTFOLIO_DATA } from './services/portfolioData';
 import { PortfolioSection } from './types';
 
@@ -42,8 +43,15 @@ const App: React.FC = () => {
   const [nearbyZone, setNearbyZone] = useState<PortfolioSection | null>(null);
   const [activeZone, setActiveZone] = useState<PortfolioSection | null>(null);
   
+  // Terminal state
+  const [terminalExpanded, setTerminalExpanded] = useState(true);
+  const [selectedMode, setSelectedMode] = useState<'TELEOP' | 'AUTO' | null>(null);
+  
   // Shared reference for position (now tracks the Dog)
   const positionRef = useRef<Vector3>(new Vector3(0, 0, 0));
+
+  // Controls are disabled when terminal is expanded or no mode selected
+  const controlsEnabled = !terminalExpanded && selectedMode === 'TELEOP';
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -103,6 +111,7 @@ const App: React.FC = () => {
             scale={2.2} 
             onSpeedChange={setSpeed}
             positionRef={positionRef}
+            controlsEnabled={controlsEnabled}
           />
 
           <InteractionManager 
@@ -119,6 +128,14 @@ const App: React.FC = () => {
         nearbyZone={nearbyZone}
         activeZone={activeZone}
         onClose={() => setActiveZone(null)}
+        selectedMode={selectedMode}
+      />
+
+      <TerminalLanding 
+        isExpanded={terminalExpanded}
+        onToggle={() => setTerminalExpanded(prev => !prev)}
+        onModeSelect={setSelectedMode}
+        selectedMode={selectedMode}
       />
     </div>
   );

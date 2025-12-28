@@ -6,9 +6,19 @@ interface UIOverlayProps {
   nearbyZone: PortfolioSection | null;
   activeZone: PortfolioSection | null;
   onClose: () => void;
+  selectedMode: 'TELEOP' | 'AUTO' | null;
 }
 
-export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZone, onClose }) => {
+export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZone, onClose, selectedMode }) => {
+  
+  // Get mode display text
+  const getModeText = () => {
+    switch (selectedMode) {
+      case 'TELEOP': return 'TELEOPERATION';
+      case 'AUTO': return 'AUTONOMOUS';
+      default: return 'NULL';
+    }
+  };
   
   // --- ACTIVE MODAL VIEW ---
   if (activeZone) {
@@ -106,8 +116,8 @@ export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZ
           ODIL.OS <span className="text-safety-yellow">//</span> SYSTEM
         </h1>
         <div className="flex gap-4 mt-2 font-code text-[10px] text-muted-grey uppercase">
-           <span>Unit: ROBODOG-01</span>
-           <span>Mode: EXPLORATION</span>
+           <span>Unit: ODI-001</span>
+           <span>Mode: {getModeText()}</span>
         </div>
       </div>
 

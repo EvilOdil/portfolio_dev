@@ -10,6 +10,7 @@ interface RoboticDogProps {
   position?: [number, number, number];
   rotation?: [number, number, number];
   scale?: number;
+  controlsEnabled?: boolean;
 }
 
 export const RoboticDog: React.FC<RoboticDogProps> = ({ 
@@ -17,7 +18,8 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
   positionRef,
   position = [0, 10, 0], 
   rotation = [0, 0, 0], 
-  scale = 1 
+  scale = 1,
+  controlsEnabled = true
 }) => {
   const group = useRef<Group>(null);
   const { scene: modelScene, animations: rawAnimations } = useGLTF('/models/walking_robotic_dog.glb');
@@ -132,12 +134,16 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
 
     // --- 1. CONTROLS ---
     let speed = 0;
-    if (controls.forward) speed = WALK_SPEED;
-    if (controls.backward) speed = -WALK_SPEED; // Full speed backwards
+    
+    // Only process movement controls if enabled
+    if (controlsEnabled) {
+      if (controls.forward) speed = WALK_SPEED;
+      if (controls.backward) speed = -WALK_SPEED; // Full speed backwards
 
-    if (Math.abs(speed) > 0.1) {
-        if (controls.left) facingAngle.current += TURN_SPEED * delta;
-        if (controls.right) facingAngle.current -= TURN_SPEED * delta;
+      if (Math.abs(speed) > 0.1) {
+          if (controls.left) facingAngle.current += TURN_SPEED * delta;
+          if (controls.right) facingAngle.current -= TURN_SPEED * delta;
+      }
     }
 
     // Update animation state only on change to prevent re-triggering effect
