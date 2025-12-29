@@ -268,4 +268,4 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
   );
 };
 
-useGLTF.preload('/models/walking_robotic_dog.glb');
+useGLTF.preload('/models/walking_robotic_dog_draco.glb');

@@ -82,4 +82,4 @@ export const FactoryWorld: React.FC = () => {
 };
 
 // Preload
-useGLTF.preload('/models/factory_2.glb');
+useGLTF.preload('/models/factory_2_draco.glb');
