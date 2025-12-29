@@ -106,15 +106,12 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
  \\___/|____/|_|____|   |____/  |__/\\__\\___/|_| \\_\\____|____/
 `;
 
-  // Initialize terminal with welcome message - line by line animation
+  // Initialize terminal with welcome message - line by line animation (reliable setTimeout version)
   useEffect(() => {
-    // Combine all intro lines into a single array for stable animation
     const introLines = [
       ...(!hasPrintedSentence ? ['This sentence should only appear once.'] : []),
       '__ASCII_TITLE__',
       '',
-      // Only print this sentence if it hasn't been printed yet
-      
       '',
       'I am an Engineering Student with a passion for Robotics, Computer Vision and Startups.',
       '',
@@ -132,22 +129,26 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
 
     setDisplayedLines([]);
     setIsAnimating(true);
-    let lineIndex = 0;
-    const interval = setInterval(() => {
-      if (lineIndex < introLines.length) {
-        setDisplayedLines(prev => [...prev, introLines[lineIndex]]);
-        // If our special sentence is printed, set the flag
-        if (introLines[lineIndex] === 'This sentence should only appear once.') {
+    let cancelled = false;
+
+    function showLine(index: number) {
+      if (cancelled) return;
+      if (index < introLines.length) {
+        setDisplayedLines(prev => [...prev, introLines[index]]);
+        if (introLines[index] === 'This sentence should only appear once.') {
           setHasPrintedSentence(true);
         }
-        lineIndex++;
+        setTimeout(() => showLine(index + 1), 80);
       } else {
-        clearInterval(interval);
         setIsAnimating(false);
       }
-    }, 80);
+    }
 
-    return () => clearInterval(interval);
+    showLine(0);
+
+    return () => {
+      cancelled = true;
+    };
   }, [hasPrintedSentence]);
 
   // Handle resize mouse events
