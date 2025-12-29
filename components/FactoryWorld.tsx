@@ -5,7 +5,7 @@ import { Mesh, Box3, Vector3, Group, FrontSide } from 'three';
 export const FactoryWorld: React.FC = () => {
   // Load the custom world asset
   // Note: Ensure the file is at public/models/factory_2.glb
-  const { scene } = useGLTF('/public/models/factory_2_draco.glb');
+  const { scene } = useGLTF('/models/factory_2_draco.glb');
   const groupRef = useRef<Group>(null);
 
   useEffect(() => {
