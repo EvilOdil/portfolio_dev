@@ -82,6 +82,8 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
   selectedMode
 }) => {
   const [displayedLines, setDisplayedLines] = useState<string[]>([]);
+  // State to ensure a sentence is only printed once
+  const [hasPrintedSentence, setHasPrintedSentence] = useState(false);
   const [currentInput, setCurrentInput] = useState('');
   const [commandExecuted, setCommandExecuted] = useState(false);
   const [isCollapsing, setIsCollapsing] = useState(false);
@@ -106,55 +108,47 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
 
   // Initialize terminal with welcome message - line by line animation
   useEffect(() => {
-    const initialLines = [
-      '__ASCII_TITLE__', // Special marker for ASCII title
+    // Combine all intro lines into a single array for stable animation
+    const introLines = [
+      ...(!hasPrintedSentence ? ['This sentence should only appear once.'] : []),
+      '__ASCII_TITLE__',
       '',
+      // Only print this sentence if it hasn't been printed yet
+      
+      '',
+      'I am an Engineering Student with a passion for Robotics, Computer Vision and Startups.',
+      '',
+      '',
+      'ODI-001, my virtual robot dog, is here to take you on a journey to explore my world.',
+      '',
+      '',
+      '┌───────────────────────────────────────┐',
+      '│  Select navigation mode:              │',
+      '│    [T] Teleoperate                    │',
+      '│    [A] Autonomous navigation          │',
+      '└───────────────────────────────────────┘',
+      ''
     ];
-    
-    allLinesRef.current = initialLines;
+
     setDisplayedLines([]);
     setIsAnimating(true);
-    
-    // Animate lines appearing one by one
     let lineIndex = 0;
     const interval = setInterval(() => {
-      if (lineIndex < initialLines.length) {
-        setDisplayedLines(prev => [...prev, initialLines[lineIndex]]);
+      if (lineIndex < introLines.length) {
+        setDisplayedLines(prev => [...prev, introLines[lineIndex]]);
+        // If our special sentence is printed, set the flag
+        if (introLines[lineIndex] === 'This sentence should only appear once.') {
+          setHasPrintedSentence(true);
+        }
         lineIndex++;
       } else {
         clearInterval(interval);
-        // After initial lines, add the rest with ASCII_ART marker
-        const remainingLines = [
-          '',
-          'I am an Engineering Student with a passion for',
-          'Robotics, Computer Vision and Startups.',
-          '',
-          'ODI-001, my virtual robot dog, is here to take',
-          'you on a journey to explore my world.',
-          '',
-          '┌───────────────────────────────────────┐',
-          '│  Select navigation mode:              │',
-          '│    [T] Teleoperate                    │',
-          '│    [A] Autonomous navigation          │',
-          '└───────────────────────────────────────┘',
-          ''
-        ];
-        
-        let remIndex = 0;
-        const remInterval = setInterval(() => {
-          if (remIndex < remainingLines.length) {
-            setDisplayedLines(prev => [...prev, remainingLines[remIndex]]);
-            remIndex++;
-          } else {
-            clearInterval(remInterval);
-            setIsAnimating(false);
-          }
-        }, 80);
+        setIsAnimating(false);
       }
-    }, 80); // 80ms delay between lines
-    
+    }, 80);
+
     return () => clearInterval(interval);
-  }, []);
+  }, [hasPrintedSentence]);
 
   // Handle resize mouse events
   useEffect(() => {
