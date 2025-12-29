@@ -22,7 +22,7 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
   controlsEnabled = true
 }) => {
   const group = useRef<Group>(null);
-  const { scene: modelScene, animations: rawAnimations } = useGLTF('/models/walking_robotic_dog.glb');
+  const { scene: modelScene, animations: rawAnimations } = useGLTF('/models/walking_robotic_dog_draco.glb');
   
   // FIX: Trim animation to remove stuck frames at the end
   // We clone the clips and reduce duration to loop only the walking part
