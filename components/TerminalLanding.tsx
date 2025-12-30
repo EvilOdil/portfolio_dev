@@ -84,6 +84,7 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
   isMobile
 }) => {
   const [displayedLines, setDisplayedLines] = useState<string[]>([]);
+  const mobileInputRef = useRef<HTMLInputElement>(null);
   // State to ensure a sentence is only printed once
   const [hasPrintedSentence, setHasPrintedSentence] = useState(false);
   const [currentInput, setCurrentInput] = useState('');
@@ -212,6 +213,11 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
   useEffect(() => {
     if (!isExpanded) return;
 
+    // Focus hidden input on mobile to trigger keyboard
+    if (isMobile && mobileInputRef.current) {
+      mobileInputRef.current.focus();
+    }
+
     const handleKeyDown = (e: KeyboardEvent) => {
       // Toggle terminal with backtick
       if (e.key === '`' || e.key === 'Backquote') {
@@ -245,7 +251,7 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isExpanded, isCollapsing, isAnimating, onToggle, pendingCommand]);
+  }, [isExpanded, isCollapsing, isAnimating, onToggle, pendingCommand, isMobile]);
 
   const executeCommand = (mode: 'T' | 'A') => {
     setCommandExecuted(true);
@@ -425,13 +431,43 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
                 );
               })}
 
-              {/* Current prompt line with blinking cursor */}
+              {/* Current prompt line with blinking cursor and mobile input */}
               {!isCollapsing && !isAnimating && (
                 <>
                   <div className={`flex items-center ${isMobile ? 'text-xs' : 'text-sm'} mt-2`} style={{ textShadow: '0 0 4px #008f11' }}>
                     <span>$ </span>
                     <span>{currentInput}</span>
                     <span className="animate-pulse ml-0.5">▌</span>
+                    {/* Hidden input for mobile to trigger keyboard */}
+                    {isMobile && (
+                      <input
+                        ref={mobileInputRef}
+                        type="text"
+                        inputMode="text"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        style={{
+                          position: 'absolute',
+                          opacity: 0,
+                          width: 1,
+                          height: 1,
+                          pointerEvents: 'none',
+                        }}
+                        value={currentInput}
+                        onChange={e => {
+                          const val = e.target.value.toUpperCase();
+                          if (val === 'T' || val === 'A') {
+                            setCurrentInput(val);
+                            setPendingCommand(val as 'T' | 'A');
+                          } else if (val === '') {
+                            setCurrentInput('');
+                            setPendingCommand(null);
+                          }
+                        }}
+                        maxLength={1}
+                      />
+                    )}
                   </div>
                   {/* Mobile floating Enter button */}
                   {isMobile && pendingCommand && (
@@ -453,11 +489,7 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
                       }}
                       onClick={() => {
                         if (pendingCommand) {
-                          // Hide button immediately
-                          setTimeout(() => {
-                            // This ensures the button disappears before executeCommand triggers collapse
-                            // and avoids double execution if user taps fast
-                          }, 0);
+                          setTimeout(() => {}, 0);
                           executeCommand(pendingCommand);
                         }
                       }}
