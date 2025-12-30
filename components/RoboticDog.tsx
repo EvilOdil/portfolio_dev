@@ -4,6 +4,14 @@ import { Group, Mesh, Vector3, Raycaster, Object3D, Box3, LoopRepeat } from 'thr
 import { useFrame, useThree } from '@react-three/fiber';
 import { useControls } from '../hooks/useControls';
 
+// Helper to get global analog turn value (set by MobileControls)
+function getMobileTurnAmount(): number | null {
+  if (typeof window !== 'undefined' && typeof (window as any).__mobileTurnAmount === 'number') {
+    return (window as any).__mobileTurnAmount;
+  }
+  return null;
+}
+
 interface RoboticDogProps {
   onSpeedChange: (speed: number) => void;
   positionRef: React.MutableRefObject<Vector3>;
@@ -11,6 +19,7 @@ interface RoboticDogProps {
   rotation?: [number, number, number];
   scale?: number;
   controlsEnabled?: boolean;
+  panTilt?: React.RefObject<{ x: number; y: number }>;
 }
 
 export const RoboticDog: React.FC<RoboticDogProps> = ({ 
@@ -19,7 +28,8 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
   position = [0, 10, 0], 
   rotation = [0, 0, 0], 
   scale = 1,
-  controlsEnabled = true
+  controlsEnabled = true,
+  panTilt
 }) => {
   const group = useRef<Group>(null);
   const { scene: modelScene, animations: rawAnimations } = useGLTF('/models/walking_robotic_dog_draco.glb');
@@ -140,9 +150,15 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
       if (controls.forward) speed = WALK_SPEED;
       if (controls.backward) speed = -WALK_SPEED; // Full speed backwards
 
-      if (Math.abs(speed) > 0.1) {
-          if (controls.left) facingAngle.current += TURN_SPEED * delta;
-          if (controls.right) facingAngle.current -= TURN_SPEED * delta;
+      // --- Analog turning for mobile ---
+      const analogTurn = getMobileTurnAmount();
+      if (Math.abs(speed) > 0.1 && analogTurn !== null) {
+        // Use analog turn value for smooth incremental turning (scale by TURN_SPEED)
+        facingAngle.current += TURN_SPEED * analogTurn * delta;
+      } else if (Math.abs(speed) > 0.1) {
+        // Fallback to digital (desktop/keyboard)
+        if (controls.left) facingAngle.current += TURN_SPEED * delta;
+        if (controls.right) facingAngle.current -= TURN_SPEED * delta;
       }
     }
 
@@ -227,19 +243,24 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
 
     onSpeedChange(Math.abs(speed));
 
-    // --- 6. CAMERA ---
+    // --- 8. CAMERA ---
+    let panX = 0, panY = 0;
+    if (panTilt && panTilt.current) {
+      panX = panTilt.current.x;
+      panY = panTilt.current.y;
+    } else {
+      panX = state.pointer.x;
+      panY = state.pointer.y;
+    }
     const cx = nextX + Math.sin(facingAngle.current) * CAMERA_DISTANCE;
     const cz = nextZ + Math.cos(facingAngle.current) * CAMERA_DISTANCE;
-    
     targetCameraPos.current.set(cx, nextY + CAMERA_HEIGHT, cz);
     camera.position.lerp(targetCameraPos.current, CAMERA_SMOOTHNESS);
-    
     const focusPoint = group.current.position.clone();
     focusPoint.y += 2.0;
-    focusPoint.x += Math.cos(facingAngle.current) * state.pointer.x * 5;
-    focusPoint.z += -Math.sin(facingAngle.current) * state.pointer.x * 5;
-    focusPoint.y += state.pointer.y * 5;
-
+    focusPoint.x += Math.cos(facingAngle.current) * panX * 5;
+    focusPoint.z += -Math.sin(facingAngle.current) * panX * 5;
+    focusPoint.y += panY * 5;
     camera.lookAt(focusPoint);
   });
 

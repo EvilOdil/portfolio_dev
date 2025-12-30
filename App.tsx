@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import useIsMobile from './hooks/useIsMobile';
 import MobileControls from './components/MobileControls';
+import MobilePanTilt from './components/MobilePanTilt';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Stars, Loader } from '@react-three/drei';
 import { Vector3 } from 'three';
@@ -69,6 +70,15 @@ const App: React.FC = () => {
   }, [nearbyZone]);
 
   const isMobile = useIsMobile();
+  // Pan/tilt state for mobile
+  const panTilt = useRef({ x: 0, y: 0 });
+  // Handler for pan/tilt control
+  function handlePanTilt(dx: number, dy: number) {
+    panTilt.current.x += dx * 0.02; // Sensitivity
+    panTilt.current.y += dy * 0.02;
+    panTilt.current.y = Math.max(-1, Math.min(1, panTilt.current.y));
+  }
+
   return (
     <div className="relative w-full h-full bg-gray-900">
       <Canvas
@@ -80,6 +90,13 @@ const App: React.FC = () => {
           far: 1000
         }}
         dpr={isMobile ? [1, 1.5] : [1, 2]}
+        gl={{
+          // Disable default pointer controls for mobile
+          powerPreference: 'high-performance',
+          antialias: true,
+        }}
+        // Disable pointer events for mobile
+        style={isMobile ? { touchAction: 'none', pointerEvents: 'none' } : {}}
       >
         {/* Environment - Dark Industrial Factory */}
         <color attach="background" args={['#111']} />
@@ -124,6 +141,7 @@ const App: React.FC = () => {
             onSpeedChange={setSpeed}
             positionRef={positionRef}
             controlsEnabled={controlsEnabled}
+            panTilt={isMobile ? panTilt : undefined}
           />
 
           <InteractionManager 
@@ -152,7 +170,8 @@ const App: React.FC = () => {
         isMobile={isMobile}
       />
 
-      {isMobile && !terminalExpanded && <MobileControls />}
+      {isMobile && <MobileControls />}
+      {isMobile && <MobilePanTilt onPanTilt={handlePanTilt} />}
     </div>
   );
 };

@@ -380,7 +380,7 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
           {/* Side by side Layout: ASCII art on left, content on right */}
           <div className={isMobile ? 'flex flex-col gap-1' : 'flex flex-row gap-8'} style={isMobile ? { fontSize: '10px' } : {}}>
             {/* ASCII Art Profile - Left Side */}
-            <div className="shrink-0 overflow-x-auto flex items-start">
+            <div className={isMobile ? 'shrink-0 overflow-x-auto flex items-start' : 'shrink-0 overflow-x-auto flex items-start'}>
               <pre 
                 className="text-[#00ff00] leading-none select-none"
                 style={{ 
@@ -438,65 +438,55 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
                     <span>$ </span>
                     <span>{currentInput}</span>
                     <span className="animate-pulse ml-0.5">▌</span>
-                    {/* Hidden input for mobile to trigger keyboard */}
-                    {isMobile && (
-                      <input
-                        ref={mobileInputRef}
-                        type="text"
-                        inputMode="text"
-                        autoCapitalize="none"
-                        autoCorrect="off"
-                        spellCheck={false}
-                        style={{
-                          position: 'absolute',
-                          opacity: 0,
-                          width: 1,
-                          height: 1,
-                          pointerEvents: 'none',
-                        }}
-                        value={currentInput}
-                        onChange={e => {
-                          const val = e.target.value.toUpperCase();
-                          if (val === 'T' || val === 'A') {
-                            setCurrentInput(val);
-                            setPendingCommand(val as 'T' | 'A');
-                          } else if (val === '') {
-                            setCurrentInput('');
-                            setPendingCommand(null);
-                          }
-                        }}
-                        maxLength={1}
-                      />
-                    )}
                   </div>
-                  {/* Mobile floating Enter button */}
-                  {isMobile && pendingCommand && (
-                    <button
-                      style={{
-                        marginTop: 8,
-                        alignSelf: 'flex-start',
-                        background: '#111',
-                        color: '#00ff00',
-                        border: '1px solid #00ff00',
-                        borderRadius: 6,
-                        padding: '2px 16px',
-                        fontSize: 14,
-                        fontFamily: 'inherit',
-                        fontWeight: 700,
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                        letterSpacing: 1,
-                        marginLeft: 0
-                      }}
-                      onClick={() => {
-                        if (pendingCommand) {
-                          setTimeout(() => {}, 0);
-                          executeCommand(pendingCommand);
-                        }
-                      }}
-                      aria-label="Enter"
-                    >
-                      Enter
-                    </button>
+                  {/* Mobile: show [T] and [A] buttons for mode selection */}
+                  {isMobile && !pendingCommand && (
+                    <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                      <button
+                        style={{
+                          background: '#111',
+                          color: '#00ff00',
+                          border: '1px solid #00ff00',
+                          borderRadius: 6,
+                          padding: '2px 18px',
+                          fontSize: 18,
+                          fontFamily: 'inherit',
+                          fontWeight: 700,
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                          letterSpacing: 2,
+                        }}
+                        onClick={() => {
+                          setCurrentInput('T');
+                          setPendingCommand('T');
+                          executeCommand('T');
+                        }}
+                        aria-label="Teleop Mode"
+                      >
+                        [T]
+                      </button>
+                      <button
+                        style={{
+                          background: '#111',
+                          color: '#00ff00',
+                          border: '1px solid #00ff00',
+                          borderRadius: 6,
+                          padding: '2px 18px',
+                          fontSize: 18,
+                          fontFamily: 'inherit',
+                          fontWeight: 700,
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                          letterSpacing: 2,
+                        }}
+                        onClick={() => {
+                          setCurrentInput('A');
+                          setPendingCommand('A');
+                          executeCommand('A');
+                        }}
+                        aria-label="Autonomous Mode"
+                      >
+                        [A]
+                      </button>
+                    </div>
                   )}
                 </>
               )}

@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import useMobileTurnAmount from '../hooks/useMobileTurnAmount';
 import './MobileControls.css';
 
 // Helper to dispatch keyboard events
@@ -27,6 +28,10 @@ export default function MobileControls() {
   }
 
   // On drag, calculate direction and trigger keys
+  // Store the current turnAmount for analog turning
+  const [turnAmount, setTurnAmount] = useState<number | null>(null);
+  useMobileTurnAmount(turnAmount);
+
   function handleMove(clientX: number, clientY: number, origin: DOMRect) {
     const dx = clientX - (origin.left + origin.width / 2);
     const dy = clientY - (origin.top + origin.height / 2);
@@ -35,20 +40,31 @@ export default function MobileControls() {
     const maxDist = JOYSTICK_RADIUS - KNOB_RADIUS;
     const clampedDist = Math.min(dist, maxDist);
     const angle = Math.atan2(dy, dx);
-    const x = clampedDist * Math.cos(angle);
+    // Use xRaw for knob UI, but invert x for logic
+    const xRaw = clampedDist * Math.cos(angle);
     const y = clampedDist * Math.sin(angle);
-    setKnobPos({ x, y });
+    setKnobPos({ x: xRaw, y });
 
-    // Linear scaler for smooth turning (X axis, -1 to 1)
+    // Invert X axis for logic only
+    const x = -xRaw;
     const turnAmount = Math.max(-1, Math.min(1, x / maxDist));
+    setTurnAmount(turnAmount);
+
 
     // Forward/backward threshold
     const forward = y < -10;
     const backward = y > 10;
 
-    // Just set left/right based on joystick direction (desktop logic now handles swap)
-    const left = (forward || backward) && x < -15;
-    const right = (forward || backward) && x > 15;
+
+    // Correct left/right logic for forward/backward
+    let left = false, right = false;
+    if (forward) {
+      left = x < -15;
+      right = x > 15;
+    } else if (backward) {
+      left = x > 15;
+      right = x < -15;
+    }
 
     setKey('w', forward);
     setKey('s', backward);
@@ -66,6 +82,7 @@ export default function MobileControls() {
     setKey('d', false);
     setKey('s', false);
     setActive(false);
+    setTurnAmount(null); // Reset analog turn
   }
 
   const joystickRef = useRef<HTMLDivElement>(null);
