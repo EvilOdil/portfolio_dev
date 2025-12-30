@@ -1,0 +1,45 @@
+.mobile-controls-overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  padding-bottom: 16px;
+.joystick {
+  touch-action: none;
+  user-select: none;
+  margin-bottom: 12px;
+}
+.joystick-base {
+  pointer-events: none;
+}
+.joystick-knob {
+  pointer-events: auto;
+  transition: left 0.1s, top 0.1s;
+}
+.action-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  justify-content: center;
+}
+.action-buttons button {
+  min-width: 80px;
+  height: 48px;
+  border-radius: 24px;
+  border: 2px solid #ffd600;
+  background: #222;
+  color: #ffd600;
+  font-size: 1.1rem;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  touch-action: manipulation;
+}
+.action-buttons button:active {
+  background: #ffd600;
+  color: #222;
+}

@@ -5,6 +5,7 @@ interface TerminalLandingProps {
   onToggle: () => void;
   onModeSelect: (mode: 'TELEOP' | 'AUTO' | null) => void;
   selectedMode: 'TELEOP' | 'AUTO' | null;
+  isMobile?: boolean;
 }
 
 // ASCII art profile picture
@@ -79,7 +80,8 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
   isExpanded,
   onToggle,
   onModeSelect,
-  selectedMode
+  selectedMode,
+  isMobile
 }) => {
   const [displayedLines, setDisplayedLines] = useState<string[]>([]);
   // State to ensure a sentence is only printed once
@@ -93,7 +95,10 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
   const allLinesRef = useRef<string[]>([]);
   
   // Resizable terminal state
-  const [terminalSize, setTerminalSize] = useState({ width: 1050, height: 600 });
+  const [terminalSize, setTerminalSize] = useState({
+    width: isMobile ? Math.min(window.innerWidth - 24, 380) : 1050,
+    height: isMobile ? Math.min(window.innerHeight - 24, 600) : 600
+  });
   const [isResizing, setIsResizing] = useState(false);
   const resizeRef = useRef<{ startX: number; startY: number; startWidth: number; startHeight: number } | null>(null);
 
@@ -119,12 +124,23 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
       'ODI-001, my virtual robot dog, is here to take you on a journey to explore my world.',
       '',
       '',
-      '┌───────────────────────────────────────┐',
-      '│  Select navigation mode:              │',
-      '│    [T] Teleoperate                    │',
-      '│    [A] Autonomous navigation          │',
-      '└───────────────────────────────────────┘',
-      ''
+      ...(isMobile
+        ? [
+            '┌─────────────────┐',
+            '│  Select Mode:   │',
+            '│  [T] Teleop     │',
+            '│  [A] AutoNav    │',
+            '└─────────────────┘',
+            ''
+          ]
+        : [
+            '┌───────────────────────────────────────┐',
+            '│  Select navigation mode:              │',
+            '│    [T] Teleoperate                    │',
+            '│    [A] Autonomous navigation          │',
+            '└───────────────────────────────────────┘',
+            ''
+          ]),
     ];
 
     setDisplayedLines([]);
@@ -241,9 +257,9 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
     if (mode === 'T') {
       commandLines.push('$ ./teleop.sh');
       commandLines.push('[INFO] Initializing teleoperation module...');
-      commandLines.push('[OK] Loading ODI-001 motor controllers...');
-      commandLines.push('[OK] Establishing neural link...');
-      commandLines.push('[OK] ODI-001 connected. WASD to move, SPACE to brake.');
+      commandLines.push('[OK] Loading ODI-001 controller...');
+      commandLines.push('[OK] Launching teleop node...');
+      commandLines.push('[OK] ODI-001 connected. use WASD to move.');
       commandLines.push('[OK] Ready. Enjoy the journey!');
       commandLines.push('');
       onModeSelect('TELEOP');
@@ -292,6 +308,7 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
 
   // Minimized bar
   if (!isExpanded) {
+    if (isMobile) return null;
     return (
       <div 
         onClick={onToggle}
@@ -301,7 +318,7 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
           <span className="text-[#00ff00] font-code text-xs" style={{ textShadow: '0 0 4px #008f11' }}>
             odil@odi-001:~$ {selectedMode === 'TELEOP' ? './teleop.sh' : selectedMode === 'AUTO' ? './auto_nav.sh' : ''}
           </span>
-          <span className="text-[#666] font-code text-xs">[minimized - press ` or click to expand]</span>
+          
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[#888] font-code text-[10px]">MODE: {selectedMode || 'NULL'}</span>
@@ -317,15 +334,15 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
 
   // Full terminal - centered resizable window
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-code">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-2 font-code">
       {/* Terminal Window */}
       <div 
         className="bg-[#0d0d0d] border border-[#333] rounded-lg shadow-2xl flex flex-col overflow-hidden relative"
         style={{ 
-          width: `${terminalSize.width}px`, 
-          height: `${terminalSize.height}px`,
-          maxWidth: 'calc(100vw - 32px)',
-          maxHeight: 'calc(100vh - 32px)'
+          width: isMobile ? '95vw' : `${terminalSize.width}px`,
+          height: isMobile ? '60vh' : `${terminalSize.height}px`,
+          maxWidth: isMobile ? '95vw' : 'calc(100vw - 32px)',
+          maxHeight: isMobile ? '70vh' : 'calc(100vh - 32px)'
         }}
       >
         {/* Terminal Header Bar */}
@@ -355,17 +372,18 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
           }}
         >
           {/* Side by side Layout: ASCII art on left, content on right */}
-          <div className="flex flex-row gap-8">
+          <div className={isMobile ? 'flex flex-col gap-1' : 'flex flex-row gap-8'} style={isMobile ? { fontSize: '10px' } : {}}>
             {/* ASCII Art Profile - Left Side */}
             <div className="shrink-0 overflow-x-auto flex items-start">
               <pre 
                 className="text-[#00ff00] leading-none select-none"
                 style={{ 
-                  fontSize: '6px',
-                  lineHeight: '6px',
+                  fontSize: isMobile ? '2px' : '6px',
+                  lineHeight: isMobile ? '2px' : '6px',
                   textShadow: '0 0 4px #008f11',
                   fontFamily: "'Courier New', 'Lucida Console', monospace",
-                  letterSpacing: '0px'
+                  letterSpacing: '0px',
+                  maxWidth: isMobile ? '40px' : undefined
                 }}
               >
                 {ASCII_ART}
@@ -383,7 +401,7 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
                       key={index}
                       className="text-[#00ff00] leading-tight select-none mb-4"
                       style={{ 
-                        fontSize: '14px',
+                        fontSize: isMobile ? '8px' : '14px',
                         textShadow: '0 0 8px #008f11',
                         fontFamily: "'Courier New', 'Lucida Console', monospace"
                       }}
@@ -399,7 +417,7 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
                 return (
                   <div 
                     key={index} 
-                    className="text-[#00ff00] text-sm whitespace-pre-wrap break-words"
+                    className={`text-[#00ff00] whitespace-pre-wrap break-words ${isMobile ? 'text-xs' : 'text-sm'}`}
                     style={{ textShadow: '0 0 4px #008f11' }}
                   >
                     {line || '\u00A0'}
@@ -409,21 +427,58 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
 
               {/* Current prompt line with blinking cursor */}
               {!isCollapsing && !isAnimating && (
-                <div className="flex items-center text-[#00ff00] text-sm mt-2" style={{ textShadow: '0 0 4px #008f11' }}>
-                  <span>$ </span>
-                  <span>{currentInput}</span>
-                  <span className="animate-pulse ml-0.5">▌</span>
-                </div>
+                <>
+                  <div className={`flex items-center ${isMobile ? 'text-xs' : 'text-sm'} mt-2`} style={{ textShadow: '0 0 4px #008f11' }}>
+                    <span>$ </span>
+                    <span>{currentInput}</span>
+                    <span className="animate-pulse ml-0.5">▌</span>
+                  </div>
+                  {/* Mobile floating Enter button */}
+                  {isMobile && pendingCommand && (
+                    <button
+                      style={{
+                        marginTop: 8,
+                        alignSelf: 'flex-start',
+                        background: '#111',
+                        color: '#00ff00',
+                        border: '1px solid #00ff00',
+                        borderRadius: 6,
+                        padding: '2px 16px',
+                        fontSize: 14,
+                        fontFamily: 'inherit',
+                        fontWeight: 700,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                        letterSpacing: 1,
+                        marginLeft: 0
+                      }}
+                      onClick={() => {
+                        if (pendingCommand) {
+                          // Hide button immediately
+                          setTimeout(() => {
+                            // This ensures the button disappears before executeCommand triggers collapse
+                            // and avoids double execution if user taps fast
+                          }, 0);
+                          executeCommand(pendingCommand);
+                        }
+                      }}
+                      aria-label="Enter"
+                    >
+                      Enter
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
         </div>
 
-        {/* Terminal Footer */}
-        <div className="h-6 bg-[#1a1a1a] border-t border-[#333] flex items-center justify-between px-3 text-[10px] text-[#666] shrink-0 rounded-b-lg">
-          <span>Type T or A, then press Enter</span>
-          <span>Press ` (backtick) to minimize | Drag corner to resize</span>
-        </div>
+        {/* Terminal Footer: Only show on desktop */}
+        {!isMobile && (
+          <div className="h-6 bg-[#1a1a1a] border-t border-[#333] flex items-center justify-between px-3 text-[10px] text-[#666] shrink-0 rounded-b-lg">
+            <span>Type T or A, then press Enter</span>
+          
+          </div>
+        )}
 
         {/* Resize Handle */}
         <div

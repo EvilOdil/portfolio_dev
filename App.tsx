@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
+import useIsMobile from './hooks/useIsMobile';
+import MobileControls from './components/MobileControls';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Stars, Loader } from '@react-three/drei';
 import { Vector3 } from 'three';
@@ -66,9 +68,19 @@ const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [nearbyZone]);
 
+  const isMobile = useIsMobile();
   return (
     <div className="relative w-full h-full bg-gray-900">
-      <Canvas shadows camera={{ position: [0, 20, -75], fov: 50, near: 0.1, far: 1000 }} dpr={[1, 1.5]}>
+      <Canvas
+        shadows
+        camera={{
+          position: isMobile ? [0, 25, -90] : [0, 20, -75],
+          fov: isMobile ? 60 : 50,
+          near: 0.1,
+          far: 1000
+        }}
+        dpr={isMobile ? [1, 1.5] : [1, 2]}
+      >
         {/* Environment - Dark Industrial Factory */}
         <color attach="background" args={['#111']} />
         <fog attach="fog" args={['#111', 10, 150]} />
@@ -129,6 +141,7 @@ const App: React.FC = () => {
         activeZone={activeZone}
         onClose={() => setActiveZone(null)}
         selectedMode={selectedMode}
+        isMobile={isMobile}
       />
 
       <TerminalLanding 
@@ -136,7 +149,10 @@ const App: React.FC = () => {
         onToggle={() => setTerminalExpanded(prev => !prev)}
         onModeSelect={setSelectedMode}
         selectedMode={selectedMode}
+        isMobile={isMobile}
       />
+
+      {isMobile && !terminalExpanded && <MobileControls />}
     </div>
   );
 };
