@@ -10,11 +10,34 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
       {
         title: 'Odil Janandith',
         subtitle: 'BSc Eng (Hons) in Electronic and Telecommunication',
-        description: 'I am a project-oriented creative person with a passion towards space tech, wearables, robotics, and startups. My vision is to come up with tech solutions to solve pressing socio-economic problems in the world.',
+        description: 'I am an Engineering student with a passion for **robotics**, **computer vision**, and **startups**. I have a strong foundation in **SLAM**, **computer vision for robotic perception**, and **embedded systems**. For my final year thesis, I am building an **autonomous mobility system** for quadruped and wheeled platforms. When I\'m not building or coding robots, I work on developing **STEM curriculum** and **Ed-tech platforms** for the next generation of students.',
         details: [
-          'Contact: janandithwao.21@uom.lk',
+          'Contact: odiljanandith@gmail.com',
           'Phone: +94(71) 183-1923',
           'Location: Colombo, Sri Lanka'
+        ],
+        techStack: [
+          'ROS2',
+          'Python',
+          'C++',
+          'Embedded C',
+          'Git',
+          'Linux',
+          'OpenCV',
+          'PyTorch',
+          'Altium',
+          'SolidWorks',
+          'Docker',
+          'STM32',
+          'React',
+         
+         
+        ],
+        softSkills: ['Public Speaking', 'Problem Solving', 'Quizzing'],
+        socials: [
+          { name: 'LinkedIn', url: 'https://www.linkedin.com/in/odil-janandith-940a63166/', icon: 'linkedin' },
+          { name: 'GitHub', url: 'https://github.com/EvilOdil', icon: 'github' },
+          { name: 'Facebook', url: 'https://www.facebook.com/odil.janandith.1', icon: 'facebook' }
         ]
       }
     ]

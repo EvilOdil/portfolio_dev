@@ -15,6 +15,9 @@ export interface PortfolioItem {
   details?: string[];
   link?: string;
   linkText?: string;
+  techStack?: string[];
+  softSkills?: string[];
+  socials?: { name: string; url: string; icon: string }[];
 }
 
 export interface PortfolioSection {

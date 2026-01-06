@@ -44,7 +44,7 @@ export default function MobilePanTilt({ onPanTilt }: { onPanTilt: (dx: number, d
         height: 80,
         borderRadius: '50%',
         background: 'rgba(255,255,255,0.5)',
-        zIndex: 20,
+        zIndex: 100,
         boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
         touchAction: 'none',
         display: 'flex',

@@ -53,8 +53,8 @@ const App: React.FC = () => {
   // Shared reference for position (now tracks the Dog)
   const positionRef = useRef<Vector3>(new Vector3(0, 0, 0));
 
-  // Controls are disabled when terminal is expanded or no mode selected
-  const controlsEnabled = !terminalExpanded && selectedMode === 'TELEOP';
+  // Controls are disabled when terminal is expanded, no mode selected, or zone window is open
+  const controlsEnabled = !terminalExpanded && selectedMode === 'TELEOP' && !activeZone;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -170,8 +170,8 @@ const App: React.FC = () => {
         isMobile={isMobile}
       />
 
-      {isMobile && <MobileControls />}
-      {isMobile && <MobilePanTilt onPanTilt={handlePanTilt} />}
+      {isMobile && controlsEnabled && <MobileControls />}
+      {isMobile && !terminalExpanded && <MobilePanTilt onPanTilt={handlePanTilt} />}
     </div>
   );
 };

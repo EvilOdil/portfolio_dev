@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "@react-three/fiber": "https://esm.sh/@react-three/fiber@^9.4.2",
+    "three": "https://esm.sh/three@^0.182.0",
+    "@react-three/drei": "https://esm.sh/@react-three/drei@^10.7.7",
+    "vite": "https://esm.sh/vite@^7.3.0",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
+  }
+}
+</script>
+    <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;</script>
+
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Odil's World</title>
+    
+    <!-- Fonts: Rajdhani (Headings), Roboto (Body), Space Mono (Code/Data) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Roboto:wght@300;400;500&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Keeping Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'safety-yellow': '#F2C94C',
+              'deep-slate': '#121212',
+              'concrete': '#2C2C2C',
+              'off-white': '#E0E0E0',
+              'muted-grey': '#A0A0A0',
+              'warning-strip': '#1E1E1E',
+            },
+            fontFamily: {
+              'tech': ['Rajdhani', 'sans-serif'],
+              'body': ['Roboto', 'sans-serif'],
+              'code': ['Space Mono', 'monospace'],
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body, html { 
+        margin: 0; 
+        padding: 0; 
+        width: 100%; 
+        height: 100%; 
+        overflow: hidden; 
+        background-color: #121212; 
+        color: #E0E0E0;
+      }
+      #root { width: 100%; height: 100%; }
+
+      /* Custom Hazard Stripe Pattern */
+      .hazard-stripes {
+        background: repeating-linear-gradient(
+          -45deg,
+          #F2C94C,
+          #F2C94C 10px,
+          #1E1E1E 10px,
+          #1E1E1E 20px
+        );
+      }
+      
+      /* Scrollbar Styling for Technical Feel */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #121212; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #2C2C2C; 
+        border: 1px solid #444;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #F2C94C; 
+      }
+    </style>
+
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx?t=1767730391692"></script>
+  </body>
+</html>
