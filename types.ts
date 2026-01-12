@@ -21,6 +21,7 @@ export interface PortfolioItem {
   image?: string; // Project thumbnail image path
   githubUrl?: string; // GitHub repository URL
   markdownFile?: string; // Path to markdown file with project details
+  tags?: string[]; // Project category tags
 }
 
 export interface PortfolioSection {

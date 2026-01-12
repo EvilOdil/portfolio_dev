@@ -54,7 +54,8 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
         description: 'Home grown micromouse robot based on STM32, programmed with Embedded C. Won 2nd Place at SLIIT Robofest and Championship at IIT MicroMaze 2024.',
         image: '/images/projects/obo-mouse.jpg',
         githubUrl: 'https://github.com/EvilOdil/OboMouse',
-        markdownFile: '/projects/obo-mouse.md'
+        markdownFile: '/projects/obo-mouse.md',
+        tags: ['Robotics', 'Embedded Systems']
       },
       {
         title: 'Taprobane 3.0 Rover',
@@ -62,21 +63,24 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
         description: 'Control & Data Handling Lead. Designed control systems for the European Rover Challenge finalist rover. Proposed novel mapping/localization and MPFL architecture.',
         image: '/images/projects/taprobane-rover.jpg',
         githubUrl: 'https://github.com/SEDS-UOM/Taprobane3.0',
-        markdownFile: '/projects/taprobane-rover.md'
+        markdownFile: '/projects/taprobane-rover.md',
+        tags: ['Robotics', 'Software', 'Computer Vision']
       },
       {
         title: 'Smart Mask Brace',
         description: 'Wearable device converting surgical masks into smart masks. Monitors blood oxygen & temperature. Finalist in multiple innovation competitions.',
         image: '/images/projects/smart-mask.jpg',
         githubUrl: 'https://github.com/EvilOdil/SmartMask',
-        markdownFile: '/projects/smart-mask.md'
+        markdownFile: '/projects/smart-mask.md',
+        tags: ['Embedded Systems', 'Software']
       },
       {
         title: 'QSentinal IOT Suite',
         description: 'Developed IoT protocols (lotEN and lotUDP) for enhanced security and payload. Used for swarm robotics and cold chain supply chains.',
         image: '/images/projects/qsentinal.jpg',
         githubUrl: 'https://github.com/EvilOdil/QSentinal',
-        markdownFile: '/projects/qsentinal.md'
+        markdownFile: '/projects/qsentinal.md',
+        tags: ['Software', 'Embedded Systems', 'Robotics', 'Research']
       },
       {
         title: 'Agrivoltaic Solar Project',
@@ -84,14 +88,16 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
         description: 'Award-winning project combining solar power with agriculture using IoT hardware to increase ROI by 4x.',
         image: '/images/projects/agrivoltaic.jpg',
         githubUrl: 'https://github.com/EvilOdil/Agrivoltaic',
-        markdownFile: '/projects/agrivoltaic.md'
+        markdownFile: '/projects/agrivoltaic.md',
+        tags: ['Embedded Systems', 'Software']
       },
       {
         title: 'Vision Based Bin Picking',
         description: 'Industrial warehouse computer vision system using FastSAM model achieving 7 FPS on CPU.',
         image: '/images/projects/bin-picking.jpg',
         githubUrl: 'https://github.com/EvilOdil/VisionBinPicking',
-        markdownFile: '/projects/bin-picking.md'
+        markdownFile: '/projects/bin-picking.md',
+        tags: ['Computer Vision', 'Robotics', 'Software']
       }
     ]
   },

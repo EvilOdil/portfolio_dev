@@ -15,6 +15,28 @@ export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZ
   const [selectedProject, setSelectedProject] = useState<PortfolioItem | null>(null);
   const [markdownContent, setMarkdownContent] = useState<string>('');
   const [loadingMarkdown, setLoadingMarkdown] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  // Available tags for filtering
+  const availableTags = ['Robotics', 'Computer Vision', 'Embedded Systems', 'Software', 'Research'];
+
+  // Toggle tag selection
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
+
+  // Filter projects by selected tags
+  const filteredProjects = (items: PortfolioItem[]) => {
+    // Only filter if we're in the projects section and have tags selected
+    if (activeZone?.id !== 'projects' || selectedTags.length === 0) return items;
+    const filtered = items.filter(item => 
+      item.tags && item.tags.some(tag => selectedTags.includes(tag))
+    );
+    console.log('Filtering projects:', { selectedTags, itemCount: items.length, filteredCount: filtered.length });
+    return filtered;
+  };
 
   // Load markdown content when a project is selected
   useEffect(() => {
@@ -34,11 +56,14 @@ export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZ
     }
   }, [selectedProject]);
 
-  // Reset selected project when closing modal
+  // Reset selected project and tags when closing modal or changing zones
   useEffect(() => {
     if (!activeZone) {
       setSelectedProject(null);
       setMarkdownContent('');
+      setSelectedTags([]);
+    } else if (activeZone.id !== 'projects') {
+      setSelectedTags([]);
     }
   }, [activeZone]);
   
@@ -197,10 +222,58 @@ export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZ
                   )}
                 </div>
               </div>
-            ) : activeZone.items.map((item, idx) => (
+            ) : (
+              <>
+                {/* Filter Tags for Projects */}
+                {activeZone.id === 'projects' && (
+                  <div className={`bg-[#1a1a1a] border-l-4 border-safety-yellow w-full ${isMobile ? 'p-3 mb-3 h-auto' : 'p-4 mb-4 h-[120px]'} flex flex-col justify-center`}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className={`font-tech font-bold text-safety-yellow uppercase tracking-wider ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                        Filter by Tags:
+                      </span>
+                      {selectedTags.length > 0 && (
+                        <button
+                          onClick={() => setSelectedTags([])}
+                          className={`font-code text-muted-grey hover:text-white underline transition-colors ${isMobile ? 'text-xs' : 'text-xs'}`}
+                        >
+                          Clear All
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {availableTags.map(tag => (
+                        <button
+                          key={tag}
+                          onClick={() => toggleTag(tag)}
+                          className={`${isMobile ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'} font-code font-bold tracking-wide transition-all duration-200 border-2 ${
+                            selectedTags.includes(tag)
+                              ? 'bg-safety-yellow text-black border-safety-yellow'
+                              : 'bg-concrete text-off-white border-[#555] hover:border-safety-yellow'
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* Projects List or Filtered Projects */}
+                {activeZone.id === 'projects' && filteredProjects(activeZone.items).length === 0 && selectedTags.length > 0 ? (
+                  <div className={`bg-[#1a1a1a] border border-[#444] ${isMobile ? 'p-4' : 'p-8'} text-center`}>
+                    <p className={`font-code text-muted-grey ${isMobile ? 'text-sm' : 'text-base'}`}>
+                      No projects match the selected tags.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                {filteredProjects(activeZone.items).map((item, idx) => (
               <div 
                 key={idx} 
-                className={`group bg-concrete border border-[#444] hover:border-safety-yellow transition-colors duration-200 ${isMobile ? 'p-2 text-xs' : 'p-6'}`}
+                className={`group bg-concrete border border-[#444] hover:border-safety-yellow transition-colors duration-200 w-full ${
+                  activeZone.id === 'projects' 
+                    ? isMobile ? 'p-2 text-xs h-[280px]' : 'p-6 h-[200px]'
+                    : isMobile ? 'p-2 text-xs' : 'p-6'
+                }`}
               >
                 {/* Special Layout for Profile Data Section - Desktop */}
                 {activeZone.id === 'summary' && !isMobile ? (
@@ -606,12 +679,12 @@ export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZ
                     {activeZone.id === 'projects' ? (
                       <div 
                         onClick={() => setSelectedProject(item)}
-                        className="cursor-pointer hover:border-safety-yellow transition-all duration-200"
+                        className="cursor-pointer hover:border-safety-yellow transition-all duration-200 h-full"
                       >
-                        <div className={`flex gap-4 ${isMobile ? 'flex-col' : 'flex-row'}`}>
+                        <div className={`flex gap-4 h-full ${isMobile ? 'flex-col' : 'flex-row items-start'}`}>
                           {/* Thumbnail */}
                           {item.image && (
-                            <div className={`flex-shrink-0 ${isMobile ? 'w-full h-48' : 'w-48 h-36'} border-2 border-[#555] group-hover:border-safety-yellow overflow-hidden bg-[#1a1a1a]`}>
+                            <div className={`flex-shrink-0 ${isMobile ? 'w-full h-32' : 'w-40 h-full'} border-2 border-[#555] group-hover:border-safety-yellow overflow-hidden bg-[#1a1a1a]`}>
                               <img 
                                 src={item.image} 
                                 alt={item.title}
@@ -621,8 +694,8 @@ export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZ
                           )}
                           
                           {/* Content */}
-                          <div className="flex-1">
-                            <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
+                            <div className="flex justify-between items-start mb-2 gap-3 flex-shrink-0">
                               <div className="flex-1">
                                 <h3 className={`${isMobile ? 'text-base' : 'text-xl'} font-tech font-semibold text-off-white group-hover:text-white flex items-center gap-2`}>
                                   {item.title}
@@ -652,9 +725,23 @@ export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZ
                               )}
                             </div>
                             
-                            <p className={`text-muted-grey font-body leading-relaxed ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                            <p className={`text-muted-grey font-body leading-relaxed flex-shrink-0 overflow-hidden ${isMobile ? 'text-xs line-clamp-3' : 'text-sm line-clamp-2'}`}>
                               {item.description}
                             </p>
+                            
+                            {/* Tags */}
+                            {item.tags && item.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mt-2 flex-shrink-0">
+                                {item.tags.map((tag, tagIdx) => (
+                                  <span
+                                    key={tagIdx}
+                                    className="px-2 py-0.5 text-[10px] bg-[#2a2a2a] border border-safety-yellow/30 text-safety-yellow/80 font-code tracking-wide"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -700,6 +787,10 @@ export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZ
                 )}
               </div>
             ))}
+                  </>
+                )}
+              </>
+            )}
           </div>
           {/* Footer Status Bar */}
           <div className={`border-t border-[#444] bg-[#1a1a1a] flex justify-between items-center text-[10px] font-code text-[#555] uppercase ${isMobile ? 'p-1' : 'p-2'}`}>
