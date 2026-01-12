@@ -52,28 +52,46 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
         title: 'Obo Mouse v1.0, v2.0',
         subtitle: 'RoboticGen',
         description: 'Home grown micromouse robot based on STM32, programmed with Embedded C. Won 2nd Place at SLIIT Robofest and Championship at IIT MicroMaze 2024.',
+        image: '/images/projects/obo-mouse.jpg',
+        githubUrl: 'https://github.com/EvilOdil/OboMouse',
+        markdownFile: '/projects/obo-mouse.md'
       },
       {
         title: 'Taprobane 3.0 Rover',
         subtitle: 'SEDS Sri Lanka',
         description: 'Control & Data Handling Lead. Designed control systems for the European Rover Challenge finalist rover. Proposed novel mapping/localization and MPFL architecture.',
+        image: '/images/projects/taprobane-rover.jpg',
+        githubUrl: 'https://github.com/SEDS-UOM/Taprobane3.0',
+        markdownFile: '/projects/taprobane-rover.md'
       },
       {
         title: 'Smart Mask Brace',
         description: 'Wearable device converting surgical masks into smart masks. Monitors blood oxygen & temperature. Finalist in multiple innovation competitions.',
+        image: '/images/projects/smart-mask.jpg',
+        githubUrl: 'https://github.com/EvilOdil/SmartMask',
+        markdownFile: '/projects/smart-mask.md'
       },
       {
         title: 'QSentinal IOT Suite',
         description: 'Developed IoT protocols (lotEN and lotUDP) for enhanced security and payload. Used for swarm robotics and cold chain supply chains.',
+        image: '/images/projects/qsentinal.jpg',
+        githubUrl: 'https://github.com/EvilOdil/QSentinal',
+        markdownFile: '/projects/qsentinal.md'
       },
       {
         title: 'Agrivoltaic Solar Project',
         subtitle: 'Eco Nova',
         description: 'Award-winning project combining solar power with agriculture using IoT hardware to increase ROI by 4x.',
+        image: '/images/projects/agrivoltaic.jpg',
+        githubUrl: 'https://github.com/EvilOdil/Agrivoltaic',
+        markdownFile: '/projects/agrivoltaic.md'
       },
       {
         title: 'Vision Based Bin Picking',
         description: 'Industrial warehouse computer vision system using FastSAM model achieving 7 FPS on CPU.',
+        image: '/images/projects/bin-picking.jpg',
+        githubUrl: 'https://github.com/EvilOdil/VisionBinPicking',
+        markdownFile: '/projects/bin-picking.md'
       }
     ]
   },

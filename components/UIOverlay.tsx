@@ -1,5 +1,6 @@
-import React from 'react';
-import { PortfolioSection } from '../types';
+import React, { useState, useEffect } from 'react';
+import { PortfolioSection, PortfolioItem } from '../types';
+import ReactMarkdown from 'react-markdown';
 
 interface UIOverlayProps {
   speed: number;
@@ -11,6 +12,35 @@ interface UIOverlayProps {
 }
 
 export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZone, onClose, selectedMode, isMobile }) => {
+  const [selectedProject, setSelectedProject] = useState<PortfolioItem | null>(null);
+  const [markdownContent, setMarkdownContent] = useState<string>('');
+  const [loadingMarkdown, setLoadingMarkdown] = useState(false);
+
+  // Load markdown content when a project is selected
+  useEffect(() => {
+    if (selectedProject && selectedProject.markdownFile) {
+      setLoadingMarkdown(true);
+      fetch(selectedProject.markdownFile)
+        .then(response => response.text())
+        .then(text => {
+          setMarkdownContent(text);
+          setLoadingMarkdown(false);
+        })
+        .catch(err => {
+          console.error('Failed to load markdown:', err);
+          setMarkdownContent('# Error\nFailed to load project details.');
+          setLoadingMarkdown(false);
+        });
+    }
+  }, [selectedProject]);
+
+  // Reset selected project when closing modal
+  useEffect(() => {
+    if (!activeZone) {
+      setSelectedProject(null);
+      setMarkdownContent('');
+    }
+  }, [activeZone]);
   
   // Get mode display text
   const getModeText = () => {
@@ -51,7 +81,123 @@ export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZ
           </div>
           {/* Content Scroll Area */}
           <div className={`flex-1 overflow-y-auto grid gap-4 custom-scrollbar bg-deep-slate ${isMobile ? 'p-2' : 'p-8'}`}>
-            {activeZone.items.map((item, idx) => (
+            {/* Show project detail view if a project is selected */}
+            {activeZone.id === 'projects' && selectedProject ? (
+              <div className="space-y-4">
+                {/* Back Button and GitHub Link */}
+                <div className="flex justify-between items-center">
+                  <button
+                    onClick={() => setSelectedProject(null)}
+                    className={`flex items-center gap-2 text-safety-yellow hover:text-white font-code font-bold uppercase tracking-wider transition-colors duration-200 ${isMobile ? 'text-sm' : 'text-base'}`}
+                  >
+                    <svg className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Back to Projects
+                  </button>
+
+                  {/* GitHub Link */}
+                  {selectedProject.githubUrl && (
+                    <a
+                      href={selectedProject.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`flex items-center gap-2 bg-concrete border-2 border-safety-yellow hover:bg-safety-yellow hover:text-black text-safety-yellow font-code font-bold uppercase tracking-wider transition-all duration-200 ${isMobile ? 'px-3 py-2 text-xs' : 'px-6 py-3 text-sm'}`}
+                    >
+                      <svg className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                      </svg>
+                      {!isMobile && <span>View on GitHub</span>}
+                    </a>
+                  )}
+                </div>
+
+                {/* Markdown Content */}
+                <div className={`bg-[#1a1a1a] border border-[#444] ${isMobile ? 'p-3' : 'p-6'}`}>
+                  {loadingMarkdown ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="font-code text-safety-yellow animate-pulse">Loading project details...</div>
+                    </div>
+                  ) : (
+                    <div className={`prose prose-invert max-w-none ${isMobile ? 'prose-sm' : ''}`}>
+                      <style>{`
+                        .prose {
+                          color: #e0e0e0;
+                        }
+                        .prose h1 {
+                          color: #F2C94C;
+                          font-family: 'Courier New', monospace;
+                          font-size: ${isMobile ? '1.5rem' : '2rem'};
+                          font-weight: bold;
+                          margin-bottom: 1rem;
+                          border-bottom: 2px solid #F2C94C;
+                          padding-bottom: 0.5rem;
+                        }
+                        .prose h2 {
+                          color: #ffffff;
+                          font-family: 'Courier New', monospace;
+                          font-size: ${isMobile ? '1.25rem' : '1.5rem'};
+                          font-weight: bold;
+                          margin-top: 1.5rem;
+                          margin-bottom: 0.75rem;
+                        }
+                        .prose h3 {
+                          color: #F2C94C;
+                          font-size: ${isMobile ? '1rem' : '1.25rem'};
+                          font-weight: 600;
+                          margin-top: 1rem;
+                          margin-bottom: 0.5rem;
+                        }
+                        .prose h4 {
+                          color: #ffffff;
+                          font-size: ${isMobile ? '0.9rem' : '1.1rem'};
+                          font-weight: 600;
+                          margin-top: 0.75rem;
+                          margin-bottom: 0.5rem;
+                        }
+                        .prose p {
+                          margin-bottom: 1rem;
+                          line-height: 1.6;
+                        }
+                        .prose ul, .prose ol {
+                          margin-left: 1.5rem;
+                          margin-bottom: 1rem;
+                        }
+                        .prose li {
+                          margin-bottom: 0.5rem;
+                        }
+                        .prose strong {
+                          color: #ffffff;
+                          font-weight: 600;
+                        }
+                        .prose code {
+                          background: #2a2a2a;
+                          padding: 0.2rem 0.4rem;
+                          border-radius: 2px;
+                          color: #F2C94C;
+                          font-size: 0.9em;
+                        }
+                        .prose pre {
+                          background: #1a1a1a;
+                          border: 1px solid #444;
+                          padding: 1rem;
+                          overflow-x: auto;
+                          margin-bottom: 1rem;
+                        }
+                        .prose a {
+                          color: #00A3FF;
+                          text-decoration: underline;
+                        }
+                        .prose a:hover {
+                          color: #F2C94C;
+                        }
+                      `}</style>
+                      <ReactMarkdown>{markdownContent}</ReactMarkdown>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : activeZone.items.map((item, idx) => (
               <div 
                 key={idx} 
                 className={`group bg-concrete border border-[#444] hover:border-safety-yellow transition-colors duration-200 ${isMobile ? 'p-2 text-xs' : 'p-6'}`}
@@ -456,6 +602,65 @@ export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZ
                 ) : (
                   /* Default Layout for Other Sections */
                   <>
+                    {/* Special handling for Projects section - List View */}
+                    {activeZone.id === 'projects' ? (
+                      <div 
+                        onClick={() => setSelectedProject(item)}
+                        className="cursor-pointer hover:border-safety-yellow transition-all duration-200"
+                      >
+                        <div className={`flex gap-4 ${isMobile ? 'flex-col' : 'flex-row'}`}>
+                          {/* Thumbnail */}
+                          {item.image && (
+                            <div className={`flex-shrink-0 ${isMobile ? 'w-full h-48' : 'w-48 h-36'} border-2 border-[#555] group-hover:border-safety-yellow overflow-hidden bg-[#1a1a1a]`}>
+                              <img 
+                                src={item.image} 
+                                alt={item.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          
+                          {/* Content */}
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <h3 className={`${isMobile ? 'text-base' : 'text-xl'} font-tech font-semibold text-off-white group-hover:text-white flex items-center gap-2`}>
+                                  {item.title}
+                                  <span className={`text-safety-yellow ${isMobile ? 'text-xs' : 'text-sm'}`}>▶</span>
+                                </h3>
+                                {item.subtitle && (
+                                  <p className={`text-safety-yellow font-code mt-1 uppercase tracking-wide ${isMobile ? 'text-xs' : 'text-xs'}`}>
+                                    {item.subtitle}
+                                  </p>
+                                )}
+                              </div>
+                              
+                              {/* GitHub Link */}
+                              {item.githubUrl && (
+                                <a
+                                  href={item.githubUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className={`flex-shrink-0 bg-[#1a1a1a] border border-[#444] hover:border-safety-yellow ${isMobile ? 'p-1.5' : 'p-2'} transition-all duration-200 group/github`}
+                                  title="View on GitHub"
+                                >
+                                  <svg className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-off-white group-hover/github:text-safety-yellow transition-colors`} fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                                  </svg>
+                                </a>
+                              )}
+                            </div>
+                            
+                            <p className={`text-muted-grey font-body leading-relaxed ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                              {item.description}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Default layout for non-project sections */
+                      <>
                     <div className={`flex flex-col md:flex-row justify-between items-start mb-2 border-b border-[#3a3a3a] pb-2 ${isMobile ? 'gap-1' : ''}`}>
                       <div>
                         <h3 className={`${isMobile ? 'text-base' : 'text-2xl'} font-tech font-semibold text-off-white group-hover:text-white`}>
@@ -488,6 +693,8 @@ export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZ
                           ))}
                         </ul>
                       </div>
+                    )}
+                      </>
                     )}
                   </>
                 )}

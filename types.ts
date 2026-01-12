@@ -18,6 +18,9 @@ export interface PortfolioItem {
   techStack?: string[];
   softSkills?: string[];
   socials?: { name: string; url: string; icon: string }[];
+  image?: string; // Project thumbnail image path
+  githubUrl?: string; // GitHub repository URL
+  markdownFile?: string; // Path to markdown file with project details
 }
 
 export interface PortfolioSection {

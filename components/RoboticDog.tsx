@@ -64,6 +64,10 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
   const velocityY = useRef(0);
   const isGrounded = useRef(false);
   
+  // Store initial position for respawning
+  const initialPosition = useRef(position);
+  const initialRotation = useRef(rotation[1]);
+  
   // Helpers
   const raycaster = useRef(new Raycaster());
   const downVector = useRef(new Vector3(0, -1, 0));
@@ -79,7 +83,6 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
   const CAMERA_HEIGHT = 10;
   const CAMERA_SMOOTHNESS = 0.1;
   const MAX_STEP_HEIGHT = 1.5;
-  const RESPAWN_HEIGHT = 10.0;
 
   // Initialize: Shadows & Bounding Box Calculation
   useEffect(() => {
@@ -215,11 +218,12 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
         }
     }
 
-    // Respawn
+    // Respawn at starting position if fallen off the world
     if (nextY < -50) {
-        nextY = RESPAWN_HEIGHT;
-        nextX = 0;
-        nextZ = 0;
+        nextY = initialPosition.current[1];
+        nextX = initialPosition.current[0];
+        nextZ = initialPosition.current[2];
+        facingAngle.current = initialRotation.current;
         velocityY.current = 0;
     }
 

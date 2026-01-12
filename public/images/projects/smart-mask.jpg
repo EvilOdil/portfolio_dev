@@ -1,0 +1,5 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#2a2a2a"/>
+  <text x="200" y="140" font-family="Arial" font-size="24" fill="#00A3FF" text-anchor="middle" font-weight="bold">Smart Mask</text>
+  <text x="200" y="170" font-family="Arial" font-size="16" fill="#ffffff" text-anchor="middle">Health Monitor</text>
+</svg>
