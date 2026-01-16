@@ -419,19 +419,19 @@ export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZ
                             // Map tech names to icon file paths
                             const getIconPath = (techName: string) => {
                               const name = techName.toLowerCase();
-                              if (name.includes('ros')) return '/images/ros2.jpeg';
-                              if (name.includes('python')) return '/images/Python.png';
-                              if (name.includes('c++')) return '/images/cplusplus.png';
-                              if (name.includes('embedded')) return '/images/embeddedC.png';
+                              if (name.includes('ros')) return '/images/ros2.webp';
+                              if (name.includes('python')) return '/images/Python.webp';
+                              if (name.includes('c++')) return '/images/cplusplus.webp';
+                              if (name.includes('embedded')) return '/images/embeddedC.webp';
                               if (name.includes('git')) return '/images/git.png';
                               if (name.includes('linux')) return '/images/linux.png';
                               if (name.includes('opencv')) return '/images/opencv.png';
                               if (name.includes('pytorch')) return '/images/pytorch.png';
-                              if (name.includes('altium')) return '/images/altium.png';
-                              if (name.includes('solidworks')) return '/images/solidworks.png';
-                              if (name.includes('docker')) return '/images/docker.png';
-                              if (name.includes('stm32')) return '/images/stm32.png';
-                              if (name.includes('react')) return '/images/React.png';
+                              if (name.includes('altium')) return '/images/altium.webp';
+                              if (name.includes('solidworks')) return '/images/solidworks.webp';
+                              if (name.includes('docker')) return '/images/docker.webp';
+                              if (name.includes('stm32')) return '/images/stm32.webp';
+                              if (name.includes('react')) return '/images/React.webp';
                               return null;
                             };
                             
@@ -615,19 +615,19 @@ export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZ
                           {item.techStack.map((tech, tIdx) => {
                             const getIconPath = (techName: string) => {
                               const name = techName.toLowerCase();
-                              if (name.includes('ros')) return '/images/ros2.jpeg';
-                              if (name.includes('python')) return '/images/Python.png';
-                              if (name.includes('c++')) return '/images/cplusplus.png';
-                              if (name.includes('embedded')) return '/images/embeddedC.png';
+                              if (name.includes('ros')) return '/images/ros2.webp';
+                              if (name.includes('python')) return '/images/Python.webp';
+                              if (name.includes('c++')) return '/images/cplusplus.webp';
+                              if (name.includes('embedded')) return '/images/embeddedC.webp';
                               if (name.includes('git')) return '/images/git.png';
                               if (name.includes('linux')) return '/images/linux.png';
                               if (name.includes('opencv')) return '/images/opencv.png';
                               if (name.includes('pytorch')) return '/images/pytorch.png';
-                              if (name.includes('altium')) return '/images/altium.png';
-                              if (name.includes('solidworks')) return '/images/solidworks.png';
-                              if (name.includes('docker')) return '/images/docker.png';
-                              if (name.includes('stm32')) return '/images/stm32.png';
-                              if (name.includes('react')) return '/images/React.png';
+                              if (name.includes('altium')) return '/images/altium.webp';
+                              if (name.includes('solidworks')) return '/images/solidworks.webp';
+                              if (name.includes('docker')) return '/images/docker.webp';
+                              if (name.includes('stm32')) return '/images/stm32.webp';
+                              if (name.includes('react')) return '/images/React.webp';
                               return null;
                             };
                             
@@ -745,8 +745,34 @@ export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZ
                           </div>
                         </div>
                       </div>
+                    ) : activeZone.id === 'education' ? (
+                      /* Education section with institute logos */
+                      <div className={`flex ${isMobile ? 'gap-2' : 'gap-4'} items-start`}>
+                        {/* Institute Logo */}
+                        <div className={`flex-shrink-0 ${isMobile ? 'w-12 h-12' : 'w-16 h-16'} border border-[#555] overflow-hidden bg-white flex items-center justify-center`}>
+                          <img 
+                            src={item.title.toLowerCase().includes('moratuwa') ? '/images/uom.jpg' : '/images/ananda.webp'}
+                            alt={item.title}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className={`${isMobile ? 'text-sm' : 'text-xl'} font-tech font-semibold text-off-white leading-tight`}>
+                            {item.title}
+                          </h3>
+                          {item.subtitle && (
+                            <p className={`text-safety-yellow font-code uppercase tracking-wide ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+                              {item.subtitle}
+                            </p>
+                          )}
+                          <p className={`text-muted-grey font-body leading-snug mt-1 ${isMobile ? 'text-[10px]' : 'text-sm'}`}>
+                            {item.description}
+                          </p>
+                        </div>
+                      </div>
                     ) : (
-                      /* Default layout for non-project sections */
+                      /* Default layout for other sections */
                       <>
                     <div className={`flex flex-col md:flex-row justify-between items-start mb-2 border-b border-[#3a3a3a] pb-2 ${isMobile ? 'gap-1' : ''}`}>
                       <div>
@@ -806,20 +832,8 @@ export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZ
   return (
     <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-8">
       
-      {/* Top Left: System Header */}
-      <div className="flex flex-col border-l-4 border-safety-yellow pl-4 bg-deep-slate/80 p-2 backdrop-blur-sm max-w-md">
-        <h1
-          className={
-            `${isMobile ? 'text-xl' : 'text-3xl'} font-tech font-bold text-white uppercase tracking-widest`
-          }
-        >
-          ODIL.OS <span className="text-safety-yellow">//</span> SYSTEM
-        </h1>
-        <div className="flex gap-4 mt-2 font-code text-[10px] text-muted-grey uppercase">
-           <span>Unit: ODI-001</span>
-           <span>Mode: {getModeText()}</span>
-        </div>
-      </div>
+      {/* Top spacer - HUD Navigation is rendered separately */}
+      <div></div>
 
       {/* Center Interaction Prompt (desktop) */}
       {nearbyZone && !isMobile && (

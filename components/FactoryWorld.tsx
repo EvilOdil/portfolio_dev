@@ -75,6 +75,12 @@ export const FactoryWorld: React.FC = () => {
       */}
       <gridHelper args={[400, 40, 0x444444, 0x222222]} position={[0, -0.5, 0]} />
       
+      {/* Invisible collision plane at ground level to prevent falling through */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} visible={false}>
+        <planeGeometry args={[1000, 1000]} />
+        <meshBasicMaterial transparent opacity={0} />
+      </mesh>
+      
       {/* The Loaded Model */}
       <primitive object={scene} />
     </group>

@@ -3,7 +3,7 @@ import { PortfolioSection } from '../types';
 export const PORTFOLIO_DATA: PortfolioSection[] = [
   {
     id: 'summary',
-    title: 'Profile Data',
+    title: 'Profile',
     color: '#F2C94C', // Safety Yellow
     position: [0, 4, -40],
     items: [
@@ -30,8 +30,6 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
           'Docker',
           'STM32',
           'React',
-         
-         
         ],
         softSkills: ['Public Speaking', 'Problem Solving', 'Quizzing'],
         socials: [
@@ -43,8 +41,48 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
     ]
   },
   {
+    id: 'experience',
+    title: 'Experience',
+    color: '#FF8800', // Warning Orange
+    position: [-40, 4, 0],
+    items: [
+      {
+        title: 'Chief Technology Officer',
+        subtitle: 'RoboticGen Academy | Sep 2023 - Present',
+        description: 'Leading the "Future of Learning" project and developing "Oboverse" edutech hardware/software ecosystem.',
+      },
+      {
+        title: 'Robotics Engineer Intern',
+        subtitle: 'RoboticGen | Dec 2024 - Jun 2025',
+        description: 'Developing custom robotics stack based on the Unitree Go2 Air platform.',
+      },
+      {
+        title: 'Technical Team Lead',
+        subtitle: 'Team Taprobane 4.0 | Mar 2024 - Present',
+        description: 'Leading the team for the remote edition of European Rover Challenge 2024.',
+      },
+      {
+        title: 'Intern',
+        subtitle: 'Circuit Breakers Robotics | Aug 2020 - Mar 2022',
+        description: 'Created content to teach robotics to kids and empowered robotics education in Sri Lanka.',
+      }
+    ]
+  },
+  {
+    id: 'publications',
+    title: 'Publications',
+    color: '#9B59B6', // Purple
+    position: [40, 4, -20],
+    items: [
+      {
+        title: 'Coming Soon',
+        description: 'Research publications will be added here.',
+      }
+    ]
+  },
+  {
     id: 'projects',
-    title: 'Project Logs',
+    title: 'Projects',
     color: '#E0E0E0', // Off-White (High Contrast)
     position: [0, 2.5, -5],
     items: [
@@ -102,50 +140,20 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
     ]
   },
   {
-    id: 'experience',
-    title: 'Career History',
-    color: '#FF8800', // Warning Orange
-    position: [-40, 4, 0],
+    id: 'education',
+    title: 'Education',
+    color: '#A0A0A0', // Muted Grey
+    position: [-50, 4, 30],
     items: [
       {
-        title: 'Chief Technology Officer',
-        subtitle: 'RoboticGen Academy | Sep 2023 - Present',
-        description: 'Leading the "Future of Learning" project and developing "Oboverse" edutech hardware/software ecosystem.',
+        title: 'University of Moratuwa',
+        subtitle: '2022 - Present',
+        description: 'BSc Eng (Hons) in Electronic and Telecommunication. CGPA: 3.52/4.0.',
       },
       {
-        title: 'Robotics Engineer Intern',
-        subtitle: 'RoboticGen | Dec 2024 - Jun 2025',
-        description: 'Developing custom robotics stack based on the Unitree Go2 Air platform.',
-      },
-      {
-        title: 'Technical Team Lead',
-        subtitle: 'Team Taprobane 4.0 | Mar 2024 - Present',
-        description: 'Leading the team for the remote edition of European Rover Challenge 2024.',
-      },
-      {
-        title: 'Intern',
-        subtitle: 'Circuit Breakers Robotics | Aug 2020 - Mar 2022',
-        description: 'Created content to teach robotics to kids and empowered robotics education in Sri Lanka.',
-      }
-    ]
-  },
-  {
-    id: 'skills',
-    title: 'Tech Stack',
-    color: '#00A3FF', // Tech Blue (Muted)
-    position: [0, 2, 40],
-    items: [
-      {
-        title: 'Technical Stack',
-        description: 'C++, Embedded C, Python, ROS, System Verilog, Git.',
-      },
-      {
-        title: 'Hardware Design',
-        description: 'PCB Designing (Altium), Parametric Modelling (SolidWorks, Onshape).',
-      },
-      {
-        title: 'Machine Vision',
-        description: 'Segmentation (UNET), Object Detection (YOLO), Transformers (SAM, Depth Anything).',
+        title: 'Ananda College',
+        subtitle: '2007 - 2020',
+        description: 'Physical Science Stream. Senior Quiz Team, Sinhala Literary Union.',
       }
     ]
   },
@@ -178,20 +186,26 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
     ]
   },
   {
-    id: 'education',
-    title: 'Education',
-    color: '#A0A0A0', // Muted Grey
-    position: [-50, 4, 30],
+    id: 'speeches',
+    title: 'Speeches',
+    color: '#00A3FF', // Tech Blue
+    position: [0, 2, 40],
     items: [
       {
-        title: 'University of Moratuwa',
-        subtitle: '2022 - Present',
-        description: 'BSc Eng (Hons) in Electronic and Telecommunication. CGPA: 3.52/4.0.',
-      },
+        title: 'Coming Soon',
+        description: 'Speeches and talks will be added here.',
+      }
+    ]
+  },
+  {
+    id: 'blog',
+    title: 'Blog',
+    color: '#27AE60', // Green
+    position: [50, 4, 0],
+    items: [
       {
-        title: 'Ananda College',
-        subtitle: '2007 - 2020',
-        description: 'Physical Science Stream. Senior Quiz Team, Sinhala Literary Union.',
+        title: 'Coming Soon',
+        description: 'Blog posts will be added here.',
       }
     ]
   }

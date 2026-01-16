@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense, useCallback } from 'react';
 import useIsMobile from './hooks/useIsMobile';
 import MobileControls from './components/MobileControls';
 import MobilePanTilt from './components/MobilePanTilt';
@@ -11,6 +11,7 @@ import { UIOverlay } from './components/UIOverlay';
 import { FactoryWorld } from './components/FactoryWorld';
 import { RoboticDog } from './components/RoboticDog';
 import { TerminalLanding } from './components/TerminalLanding';
+import { HudNavigation } from './components/HudNavigation';
 import { PORTFOLIO_DATA } from './services/portfolioData';
 import { PortfolioSection } from './types';
 
@@ -50,11 +51,67 @@ const App: React.FC = () => {
   const [terminalExpanded, setTerminalExpanded] = useState(true);
   const [selectedMode, setSelectedMode] = useState<'TELEOP' | 'AUTO' | null>(null);
   
+  // Teleportation state
+  const [teleportTarget, setTeleportTarget] = useState<{ x: number; y: number; z: number; rotation?: number } | null>(null);
+  
   // Shared reference for position (now tracks the Dog)
   const positionRef = useRef<Vector3>(new Vector3(0, 0, 0));
 
   // Controls are disabled when terminal is expanded, no mode selected, or zone window is open
   const controlsEnabled = !terminalExpanded && selectedMode === 'TELEOP' && !activeZone;
+
+  // Handle teleportation to a zone
+  const handleTeleport = useCallback((zoneId: string) => {
+    const zone = PORTFOLIO_DATA.find(z => z.id === zoneId);
+    if (zone) {
+      // Calculate position near the zone (offset by 6 units to trigger nearby detection)
+      const [zoneX, zoneY, zoneZ] = zone.position;
+      
+      // Calculate offset direction from zone center - position robot 6 units away
+      // This positions the robot so the zone popup will appear
+      const offsetDistance = 6;
+      
+      // Calculate angle from zone to place robot - offset in a sensible direction
+      let offsetX = 0;
+      let offsetZ = offsetDistance;
+      let facingRotation = 0; // Face towards zone
+      
+      // Adjust offset based on zone position to avoid walls/obstacles
+      if (zoneZ < 0) {
+        // Zone is behind origin, approach from front
+        offsetZ = offsetDistance;
+        facingRotation = 0;
+      } else if (zoneZ > 0) {
+        // Zone is in front, approach from back
+        offsetZ = -offsetDistance;
+        facingRotation = Math.PI;
+      }
+      
+      if (zoneX < -10) {
+        // Zone is to the left
+        offsetX = offsetDistance;
+        offsetZ = 0;
+        facingRotation = -Math.PI / 2;
+      } else if (zoneX > 10) {
+        // Zone is to the right
+        offsetX = -offsetDistance;
+        offsetZ = 0;
+        facingRotation = Math.PI / 2;
+      }
+      
+      setTeleportTarget({
+        x: zoneX + offsetX,
+        y: zoneY + 5, // Drop from above
+        z: zoneZ + offsetZ,
+        rotation: facingRotation
+      });
+    }
+  }, []);
+
+  const handleTeleportComplete = useCallback(() => {
+    // Clear teleport target after teleportation
+    setTeleportTarget(null);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -142,6 +199,8 @@ const App: React.FC = () => {
             positionRef={positionRef}
             controlsEnabled={controlsEnabled}
             panTilt={isMobile ? panTilt : undefined}
+            teleportTarget={teleportTarget}
+            onTeleportComplete={handleTeleportComplete}
           />
 
           <InteractionManager 
@@ -152,6 +211,14 @@ const App: React.FC = () => {
       </Canvas>
       
       <Loader />
+
+      {/* HUD Navigation Bar - visible when mode is selected */}
+      <HudNavigation 
+        selectedMode={selectedMode}
+        onTeleport={handleTeleport}
+        isMobile={isMobile}
+        nearbyZone={nearbyZone}
+      />
 
       <UIOverlay 
         speed={speed} 

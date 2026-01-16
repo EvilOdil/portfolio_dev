@@ -20,6 +20,8 @@ interface RoboticDogProps {
   scale?: number;
   controlsEnabled?: boolean;
   panTilt?: React.RefObject<{ x: number; y: number }>;
+  teleportTarget?: { x: number; y: number; z: number; rotation?: number } | null;
+  onTeleportComplete?: () => void;
 }
 
 export const RoboticDog: React.FC<RoboticDogProps> = ({ 
@@ -29,7 +31,9 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
   rotation = [0, 0, 0], 
   scale = 1,
   controlsEnabled = true,
-  panTilt
+  panTilt,
+  teleportTarget,
+  onTeleportComplete
 }) => {
   const group = useRef<Group>(null);
   const { scene: modelScene, animations: rawAnimations } = useGLTF('/models/walking_robotic_dog_draco.glb');
@@ -68,6 +72,9 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
   const initialPosition = useRef(position);
   const initialRotation = useRef(rotation[1]);
   
+  // Teleport handling
+  const lastTeleportTarget = useRef<{ x: number; y: number; z: number } | null>(null);
+  
   // Helpers
   const raycaster = useRef(new Raycaster());
   const downVector = useRef(new Vector3(0, -1, 0));
@@ -83,6 +90,46 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
   const CAMERA_HEIGHT = 10;
   const CAMERA_SMOOTHNESS = 0.1;
   const MAX_STEP_HEIGHT = 1.5;
+
+  // Handle teleportation
+  useEffect(() => {
+    if (teleportTarget && group.current) {
+      // Check if this is a new teleport target
+      if (!lastTeleportTarget.current || 
+          lastTeleportTarget.current.x !== teleportTarget.x ||
+          lastTeleportTarget.current.y !== teleportTarget.y ||
+          lastTeleportTarget.current.z !== teleportTarget.z) {
+        
+        // Teleport the robot
+        group.current.position.set(teleportTarget.x, teleportTarget.y, teleportTarget.z);
+        velocityY.current = 0;
+        isGrounded.current = false;
+        
+        // Update facing angle if provided
+        if (teleportTarget.rotation !== undefined) {
+          facingAngle.current = teleportTarget.rotation;
+        }
+        
+        // Update positionRef
+        if (positionRef) {
+          positionRef.current.copy(group.current.position);
+        }
+        
+        // Update camera immediately
+        const cx = teleportTarget.x + Math.sin(facingAngle.current) * CAMERA_DISTANCE;
+        const cz = teleportTarget.z + Math.cos(facingAngle.current) * CAMERA_DISTANCE;
+        camera.position.set(cx, teleportTarget.y + CAMERA_HEIGHT, cz);
+        camera.lookAt(new Vector3(teleportTarget.x, teleportTarget.y + 2, teleportTarget.z));
+        
+        lastTeleportTarget.current = { ...teleportTarget };
+        
+        if (onTeleportComplete) {
+          onTeleportComplete();
+        }
+      }
+    }
+  }, [teleportTarget, camera, onTeleportComplete, positionRef]);
+
 
   // Initialize: Shadows & Bounding Box Calculation
   useEffect(() => {
@@ -219,6 +266,7 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
     }
 
     // Respawn at starting position if fallen off the world
+    // Set threshold very low to avoid respawning during normal gameplay
     if (nextY < -50) {
         nextY = initialPosition.current[1];
         nextX = initialPosition.current[0];
