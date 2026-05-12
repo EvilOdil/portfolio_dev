@@ -8,6 +8,9 @@ import { HudNavigation } from './components/HudNavigation';
 import { PORTFOLIO_DATA } from './services/portfolioData';
 import { PortfolioSection } from './types';
 
+// Kick off the three.js chunk download immediately when this module runs,
+// before React even renders its first frame. lazy() reuses the in-flight request.
+import('./components/ThreeScene');
 const ThreeScene = lazy(() => import('./components/ThreeScene'));
 
 const App: React.FC = () => {
