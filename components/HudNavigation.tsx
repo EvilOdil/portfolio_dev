@@ -41,7 +41,6 @@ export const HudNavigation: React.FC<HudNavigationProps> = ({
 }) => {
   const [activeTickIndex, setActiveTickIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
   const playheadRef = useRef<HTMLDivElement>(null);
   const viewportWidth = useWindowWidth();
@@ -146,45 +145,44 @@ export const HudNavigation: React.FC<HudNavigationProps> = ({
 
         {/* Right Section - Hamburger (mobile) or Scrubber (desktop/compact) */}
         {isMobile ? (
-          <div className="flex-grow border-t-2 border-t-[rgba(255,255,255,0.2)] flex flex-col justify-center relative">
-            {/* Hamburger button */}
-            <div className="flex items-center justify-between px-4 py-3">
-              <div className="font-code text-[9px] text-off-white tracking-wide flex items-center">
-                [ BAG PLAYBACK // ID: <span className="ml-1">{getBagId()}</span> ]
+          <div className="flex-grow border-t-2 border-t-[rgba(255,255,255,0.2)] flex flex-col justify-center relative px-4 py-4">
+            {/* Timeline Track — ticks only, no labels */}
+            <div
+              ref={trackRef}
+              className="relative h-[2px] bg-[rgba(255,255,255,0.15)] w-full flex justify-between items-center cursor-pointer"
+              onMouseDown={handleMouseDown}
+            >
+              {/* Playhead */}
+              <div
+                ref={playheadRef}
+                className="absolute h-[8px] w-8 bg-safety-yellow top-[-3px] rounded-[1px] cursor-grab active:cursor-grabbing transition-all duration-300"
+                style={{
+                  left: `calc(${playheadPercent}% - 16px)`,
+                  boxShadow: isDragging ? '0 0 15px #FFC107, inset 0 0 5px rgba(255,255,255,0.5)' : '0 0 8px #FFC107',
+                }}
+              />
+              {/* Ticks — no label span */}
+              {zones.map((zone, index) => (
                 <div
-                  className="ml-2 w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-l-[8px] border-l-[#ff3b3b] animate-pulse"
-                  style={{ filter: 'drop-shadow(0 0 4px #ff3b3b)' }}
-                />
-                <span className="ml-1 font-bold">PLAY</span>
-              </div>
-              <button
-                onClick={() => setIsMenuOpen(v => !v)}
-                className="flex flex-col gap-[5px] p-2 ml-2"
-                aria-label="Toggle navigation menu"
-              >
-                <span className={`block w-5 h-[2px] transition-all duration-200 ${isMenuOpen ? 'bg-safety-yellow rotate-45 translate-y-[7px]' : 'bg-off-white'}`} />
-                <span className={`block w-5 h-[2px] transition-all duration-200 ${isMenuOpen ? 'opacity-0' : 'bg-off-white'}`} />
-                <span className={`block w-5 h-[2px] transition-all duration-200 ${isMenuOpen ? 'bg-safety-yellow -rotate-45 -translate-y-[7px]' : 'bg-off-white'}`} />
-              </button>
-            </div>
-            {/* Dropdown menu */}
-            {isMenuOpen && (
-              <div className="absolute top-full left-0 right-0 bg-[rgba(16,20,24,0.97)] border border-[rgba(255,255,255,0.15)] border-t-0 z-50">
-                {zones.map((zone, index) => (
-                  <button
-                    key={zone.id}
-                    onClick={() => { handleTickClick(index); setIsMenuOpen(false); }}
-                    className={`w-full text-left px-4 py-2.5 font-tech font-bold uppercase tracking-wider text-xs border-b border-[rgba(255,255,255,0.07)] last:border-b-0 transition-colors duration-150 ${
+                  key={zone.id}
+                  onClick={() => handleTickClick(index)}
+                  className="relative flex flex-col items-center cursor-pointer transition-all duration-300 z-10 group px-3 py-4"
+                  style={{ margin: '0 -12px' }}
+                >
+                  <div
+                    className={`transition-all duration-300 ${
                       activeTickIndex === index
-                        ? 'text-safety-yellow bg-[rgba(242,201,76,0.08)]'
-                        : 'text-[rgba(255,255,255,0.75)] hover:text-safety-yellow hover:bg-[rgba(242,201,76,0.05)]'
+                        ? 'h-5 bg-safety-yellow'
+                        : 'h-4 bg-[rgba(255,255,255,0.6)] group-hover:bg-safety-yellow group-hover:h-5'
                     }`}
-                  >
-                    {ZONE_LABELS[zone.id] || zone.title}
-                  </button>
-                ))}
-              </div>
-            )}
+                    style={{
+                      width: '2px',
+                      boxShadow: activeTickIndex === index ? '0 0 6px #FFC107' : 'none',
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <div className={`flex-grow border-t-2 border-t-[rgba(255,255,255,0.2)] flex flex-col justify-center relative ${scrubberPadding}`}>
