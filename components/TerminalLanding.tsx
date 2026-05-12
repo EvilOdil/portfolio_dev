@@ -342,12 +342,11 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-2 font-code">
       {/* Terminal Window */}
-      <div 
-        className="bg-[#0d0d0d] border border-[#333] rounded-lg shadow-2xl flex flex-col overflow-hidden relative"
-        style={{ 
+      <div
+        className="bg-[#0d0d0d] border border-[#333] rounded-lg shadow-2xl flex flex-col overflow-hidden relative max-w-[95vw] w-full"
+        style={{
           width: isMobile ? '95vw' : `${terminalSize.width}px`,
           height: isMobile ? '60vh' : `${terminalSize.height}px`,
-          maxWidth: isMobile ? '95vw' : 'calc(100vw - 32px)',
           maxHeight: isMobile ? '70vh' : 'calc(100vh - 32px)'
         }}
       >
@@ -380,7 +379,7 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
           {/* Side by side Layout: ASCII art on left, content on right */}
           <div className={isMobile ? 'flex flex-col gap-1' : 'flex flex-row gap-8'} style={isMobile ? { fontSize: '10px' } : {}}>
             {/* ASCII Art Profile - Left Side */}
-            <div className={isMobile ? 'shrink-0 overflow-x-auto flex items-start' : 'shrink-0 overflow-x-auto flex items-start'}>
+            <div className="shrink-0 min-h-0 overflow-x-auto flex items-start">
               <pre 
                 className="text-[#00ff00] leading-none select-none"
                 style={{ 
