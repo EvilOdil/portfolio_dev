@@ -221,37 +221,44 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
     const vx = Math.sin(facingAngle.current) * moveDist;
     const vz = Math.cos(facingAngle.current) * moveDist;
 
-    let nextX = group.current.position.x - vx; 
+    let nextX = group.current.position.x - vx;
     let nextZ = group.current.position.z - vz;
+
+    // --- 3. ROBUST GROUND DETECTION ---
+    // Terrain may not be in the scene yet (loads ~2s after the dog model).
+    // Skip physics entirely until it exists so gravity cannot accumulate and
+    // trigger the respawn loop before the floor is present.
+    const terrainGroup = globalScene.getObjectByName('world-terrain');
+    if (!terrainGroup) {
+        velocityY.current = 0;
+        return;
+    }
 
     velocityY.current -= GRAVITY * delta;
     velocityY.current = Math.max(velocityY.current, -30);
-    
+
     let nextY = group.current.position.y + velocityY.current * delta;
 
-    // --- 3. ROBUST GROUND DETECTION ---
-    const terrainGroup = globalScene.getObjectByName('world-terrain');
-    
-    if (terrainGroup) {
+    {
         // Cast ray from center, but slightly elevated
         const rayOrigin = new Vector3(nextX, nextY + 5.0, nextZ);
         raycaster.current.set(rayOrigin, downVector.current);
-        
+
         const intersects = raycaster.current.intersectObject(terrainGroup, true);
 
         if (intersects.length > 0) {
             const hit = intersects[0];
             const groundHeight = hit.point.y;
             const distToGround = nextY - groundHeight;
-            
+
             // Falling?
-            const isFalling = distToGround > 1.0; 
+            const isFalling = distToGround > 1.0;
 
             // Collision with Wall
             if (!isFalling && groundHeight > nextY + MAX_STEP_HEIGHT) {
                 nextX = group.current.position.x;
                 nextZ = group.current.position.z;
-            } 
+            }
             // Snap to Ground
             else if (distToGround <= 0.5 && distToGround > -3.0) {
                 nextY = groundHeight;
