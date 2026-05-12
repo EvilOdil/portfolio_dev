@@ -191,6 +191,8 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
 
   useFrame((state, delta) => {
     if (!group.current) return;
+    // Clamp delta to 1/30s so a stalled frame can't tunnel through terrain.
+    delta = Math.min(delta, 1 / 30);
 
     // --- 1. CONTROLS ---
     let speed = 0;
@@ -241,7 +243,7 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
 
     {
         // Cast ray from center, but slightly elevated
-        const rayOrigin = new Vector3(nextX, nextY + 5.0, nextZ);
+        const rayOrigin = new Vector3(nextX, nextY + 15.0, nextZ);
         raycaster.current.set(rayOrigin, downVector.current);
 
         const intersects = raycaster.current.intersectObject(terrainGroup, true);
