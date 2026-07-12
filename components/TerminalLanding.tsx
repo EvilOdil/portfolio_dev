@@ -94,6 +94,9 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
   const [pendingCommand, setPendingCommand] = useState<'T' | 'A' | null>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
   const allLinesRef = useRef<string[]>([]);
+  // Command-output animation interval — kept in a ref so unmounting
+  // mid-animation clears it instead of leaking
+  const commandIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
   // Resizable terminal state
   const [terminalSize, setTerminalSize] = useState({
@@ -127,11 +130,10 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
       '',
       ...(isMobile
         ? [
-            '┌─────────────────┐',
-            '│  Select Mode:   │',
-            '│  [T] Teleop     │',
-            '│  [A] AutoNav    │',
-            '└─────────────────┘',
+            '┌──────────────────────────┐',
+            '│  AUTONAV MODE            │',
+            '│  TAP ANYWHERE TO START   │',
+            '└──────────────────────────┘',
             ''
           ]
         : [
@@ -229,8 +231,8 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
       // Don't process input if command already executed and collapsing, or still animating
       if (isCollapsing || isAnimating) return;
 
-      // Handle T or A input
-      if (e.key === 't' || e.key === 'T') {
+      // Handle T or A input (teleop is desktop-only; mobile is AutoNav-only)
+      if ((e.key === 't' || e.key === 'T') && !isMobile) {
         e.preventDefault();
         setCurrentInput('T');
         setPendingCommand('T');
@@ -272,21 +274,27 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
     } else {
       commandLines.push('$ ./auto_nav.sh');
       commandLines.push('[INFO] Initializing autonomous navigation...');
-      commandLines.push('[WARN] Autonomous navigation module is under development.');
-      commandLines.push('[WARN] Feature coming soon...');
-      commandLines.push('[INFO] Falling back to manual mode. Press T to teleoperate.');
+      commandLines.push('[OK] Loading baked A* route (8 checkpoints)...');
+      commandLines.push('[OK] Collision grid verified: route is wall-free.');
+      commandLines.push(
+        isMobile
+          ? '[OK] Swipe up / down to drive ODI-001 along the route.'
+          : '[OK] Scroll to drive ODI-001 along the route.'
+      );
+      commandLines.push('[OK] Ready. Enjoy the journey!');
       commandLines.push('');
       onModeSelect('AUTO');
     }
 
     // Animate command output lines one by one
     let lineIndex = 0;
-    const interval = setInterval(() => {
+    commandIntervalRef.current = setInterval(() => {
       if (lineIndex < commandLines.length) {
         setDisplayedLines(prev => [...prev, commandLines[lineIndex]]);
         lineIndex++;
       } else {
-        clearInterval(interval);
+        if (commandIntervalRef.current) clearInterval(commandIntervalRef.current);
+        commandIntervalRef.current = null;
         // Collapse terminal after all lines displayed
         setTimeout(() => {
           onToggle();
@@ -295,6 +303,13 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
       }
     }, 150); // 150ms delay between command output lines
   };
+
+  // Clear the animation interval if the terminal unmounts mid-animation
+  useEffect(() => {
+    return () => {
+      if (commandIntervalRef.current) clearInterval(commandIntervalRef.current);
+    };
+  }, []);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -341,9 +356,17 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
   // Full terminal - centered resizable window
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-2 font-code">
-      {/* Terminal Window */}
+      {/* Terminal Window — on mobile the whole window starts AutoNav */}
       <div
         className="bg-[#0d0d0d] border border-[#333] rounded-lg shadow-2xl flex flex-col overflow-hidden relative max-w-[95vw] w-full"
+        onClick={
+          isMobile && !isAnimating && !isCollapsing && !commandExecuted
+            ? () => {
+                setCurrentInput('A');
+                executeCommand('A');
+              }
+            : undefined
+        }
         style={{
           width: isMobile ? '95vw' : `${terminalSize.width}px`,
           height: isMobile ? '60vh' : `${terminalSize.height}px`,
@@ -438,53 +461,13 @@ export const TerminalLanding: React.FC<TerminalLandingProps> = ({
                     <span>{currentInput}</span>
                     <span className="animate-pulse ml-0.5">▌</span>
                   </div>
-                  {/* Mobile: show [T] and [A] buttons for mode selection */}
-                  {isMobile && !pendingCommand && (
-                    <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                      <button
-                        style={{
-                          background: '#111',
-                          color: '#00ff00',
-                          border: '1px solid #00ff00',
-                          borderRadius: 6,
-                          padding: '2px 18px',
-                          fontSize: 18,
-                          fontFamily: 'inherit',
-                          fontWeight: 700,
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                          letterSpacing: 2,
-                        }}
-                        onClick={() => {
-                          setCurrentInput('T');
-                          setPendingCommand('T');
-                          executeCommand('T');
-                        }}
-                        aria-label="Teleop Mode"
-                      >
-                        [T]
-                      </button>
-                      <button
-                        style={{
-                          background: '#111',
-                          color: '#00ff00',
-                          border: '1px solid #00ff00',
-                          borderRadius: 6,
-                          padding: '2px 18px',
-                          fontSize: 18,
-                          fontFamily: 'inherit',
-                          fontWeight: 700,
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                          letterSpacing: 2,
-                        }}
-                        onClick={() => {
-                          setCurrentInput('A');
-                          setPendingCommand('A');
-                          executeCommand('A');
-                        }}
-                        aria-label="Autonomous Mode"
-                      >
-                        [A]
-                      </button>
+                  {/* Mobile: AutoNav only — the whole terminal is the start button */}
+                  {isMobile && (
+                    <div
+                      className="mt-3 animate-pulse text-sm"
+                      style={{ color: '#00ff00', textShadow: '0 0 4px #008f11', letterSpacing: 2 }}
+                    >
+                      [ TAP ANYWHERE TO START AUTONAV ]
                     </div>
                   )}
                 </>

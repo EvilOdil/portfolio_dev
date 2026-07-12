@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useGLTF, useAnimations } from '@react-three/drei';
-import { Group, Mesh, Vector3, Raycaster, Object3D, Box3, LoopRepeat } from 'three';
+import { Group, Mesh, Vector3, Object3D, Box3, LoopRepeat, CatmullRomCurve3 } from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useControls } from '../hooks/useControls';
+import { BAKED_PATH } from '../services/bakedPath';
+import { isCollisionReady, groundHeightAt, raycastCollision } from '../services/collision';
 
 // Helper to get global analog turn value (set by MobileControls)
 function getMobileTurnAmount(): number | null {
@@ -22,18 +24,22 @@ interface RoboticDogProps {
   panTilt?: React.RefObject<{ x: number; y: number }>;
   teleportTarget?: { x: number; y: number; z: number; rotation?: number } | null;
   onTeleportComplete?: () => void;
+  selectedMode?: 'TELEOP' | 'AUTO' | null;
+  scrollProgressRef?: React.MutableRefObject<number>;
 }
 
-export const RoboticDog: React.FC<RoboticDogProps> = ({ 
-  onSpeedChange, 
+export const RoboticDog: React.FC<RoboticDogProps> = ({
+  onSpeedChange,
   positionRef,
-  position = [0, 10, 0], 
-  rotation = [0, 0, 0], 
+  position = [0, 10, 0],
+  rotation = [0, 0, 0],
   scale = 1,
   controlsEnabled = true,
   panTilt,
   teleportTarget,
-  onTeleportComplete
+  onTeleportComplete,
+  selectedMode,
+  scrollProgressRef,
 }) => {
   const group = useRef<Group>(null);
   const { scene: modelScene, animations: rawAnimations } = useGLTF('/models/walking_robotic_dog_draco.glb');
@@ -51,11 +57,24 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
     });
   }, [rawAnimations]);
 
+  // Pre-baked A* path (generated offline by scripts/bakePath.ts)
+  const autoPath = useMemo(
+    () => new CatmullRomCurve3(BAKED_PATH.map(([x, z]) => new Vector3(x, 0, z)), false, 'centripetal'),
+    []
+  );
+  const pathLength = useMemo(() => autoPath.getLength(), [autoPath]);
+  // Carrot-follow state: the point on the curve the dog actually chases
+  const followT = useRef(0);
+  const carrotPt = useRef(new Vector3());
+  // Carrot may advance only while the dog is within this distance of it.
+  // Dog speed is min(dist*3, WALK_SPEED), so ~4 keeps it at full speed.
+  const CARROT_LEAD = 4.0;
+
   // Use modelScene as the root for animations to ensure correct bindings
   const { actions } = useAnimations(animations, modelScene);
   
   const controls = useControls();
-  const { camera, scene: globalScene } = useThree();
+  const { camera } = useThree();
   
   // State for animation
   const [moving, setMoving] = useState(false);
@@ -75,21 +94,39 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
   // Teleport handling
   const lastTeleportTarget = useRef<{ x: number; y: number; z: number } | null>(null);
   
-  // Helpers
-  const raycaster = useRef(new Raycaster());
-  const downVector = useRef(new Vector3(0, -1, 0));
+  // Helpers — all pre-allocated, reused every frame (no per-frame GC)
   const dummyObj = useRef(new Object3D());
   const targetCameraPos = useRef(new Vector3());
+  const wallRayOrigin = useRef(new Vector3());
+  const wallRayDir = useRef(new Vector3());
+  const lookTarget = useRef(new Vector3());
+  const focusPoint = useRef(new Vector3());
 
   // Constants
   const WALK_SPEED = 12.0;
   const TURN_SPEED = 2.5;
-  const GRAVITY = 60.0; 
+  const GRAVITY = 60.0;
   // Adjusted for larger scale (scale=2.2 vs previous 1.5)
-  const CAMERA_DISTANCE = 16; 
+  const CAMERA_DISTANCE = 16;
   const CAMERA_HEIGHT = 10;
   const CAMERA_SMOOTHNESS = 0.1;
   const MAX_STEP_HEIGHT = 1.5;
+  // Ground ray starts this far above the feet: above any climbable step,
+  // below any ceiling — so overhead geometry can never shadow the floor.
+  const GROUND_CLEARANCE = MAX_STEP_HEIGHT + 0.1;
+  // Snap to the floor when within this distance above it. There is no lower
+  // bound: any sub-ground clip snaps back up instead of falling through.
+  const GROUND_SNAP_DIST = 0.5;
+  // Wall rays fire at these heights above the feet. Both start above
+  // MAX_STEP_HEIGHT so climbable steps never register as walls.
+  const WALL_RAY_HEIGHTS = [GROUND_CLEARANCE, 2.6];
+  // Distance from robot centre at which movement is blocked. Must be >= body radius
+  // (~1.5 units at scale 2.2) so the surface never reaches the wall.
+  const WALL_DETECT_DIST = 3.0;
+  // Hard boundary — keeps the robot inside the playable area regardless of geometry
+  const WORLD_BOUND = 90;
+  // Below this Y the robot has left the world and respawns
+  const VOID_THRESHOLD = -20;
 
   // Handle teleportation
   useEffect(() => {
@@ -194,44 +231,77 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
     // Clamp delta to 1/30s so a stalled frame can't tunnel through terrain.
     delta = Math.min(delta, 1 / 30);
 
-    // --- 1. CONTROLS ---
+    // --- 1 & 2. CONTROLS + MOVEMENT ---
     let speed = 0;
-    
-    // Only process movement controls if enabled
-    if (controlsEnabled) {
-      if (controls.forward) speed = WALK_SPEED;
-      if (controls.backward) speed = -WALK_SPEED; // Full speed backwards
+    let nextX: number;
+    let nextZ: number;
 
-      // --- Analog turning for mobile ---
-      const analogTurn = getMobileTurnAmount();
-      if (Math.abs(speed) > 0.1 && analogTurn !== null) {
-        // Use analog turn value for smooth incremental turning (scale by TURN_SPEED)
-        facingAngle.current += TURN_SPEED * analogTurn * delta;
-      } else if (Math.abs(speed) > 0.1) {
-        // Fallback to digital (desktop/keyboard)
-        if (controls.left) facingAngle.current += TURN_SPEED * delta;
-        if (controls.right) facingAngle.current -= TURN_SPEED * delta;
+    if (selectedMode === 'AUTO' && scrollProgressRef) {
+      // Follow the pre-baked A* spline with a "carrot" that moves ALONG the
+      // curve toward the scroll position — at most at walk speed, and only
+      // while the dog is close to it. Chasing getPointAt(scrollT) directly
+      // let the dog beeline straight across the map (through ledges and
+      // walls) whenever the scroll jumped ahead of it.
+      const targetT = Math.max(0, Math.min(1, scrollProgressRef.current));
+      autoPath.getPointAt(followT.current, carrotPt.current);
+      let dx = carrotPt.current.x - group.current.position.x;
+      let dz = carrotPt.current.z - group.current.position.z;
+      let dist = Math.hypot(dx, dz);
+
+      if (dist < CARROT_LEAD) {
+        // 1.25× walk speed so the dog can reach full speed without the
+        // carrot throttling it; parameter is arc-length so this maps
+        // directly to distance along the curve.
+        const maxStep = (WALK_SPEED * 1.25 * delta) / pathLength;
+        const diff = targetT - followT.current;
+        followT.current += Math.max(-maxStep, Math.min(maxStep, diff));
+        autoPath.getPointAt(followT.current, carrotPt.current);
+        dx = carrotPt.current.x - group.current.position.x;
+        dz = carrotPt.current.z - group.current.position.z;
+        dist = Math.hypot(dx, dz);
       }
+
+      if (dist > 0.15) {
+        const autoSpeed = Math.min(dist * 3, WALK_SPEED);
+        const step = Math.min(autoSpeed * delta, dist);
+        nextX = group.current.position.x + (dx / dist) * step;
+        nextZ = group.current.position.z + (dz / dist) * step;
+        const targetAngle = Math.atan2(-dx, -dz);
+        const diff = ((targetAngle - facingAngle.current + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+        facingAngle.current += diff * Math.min(delta * 8, 1);
+        speed = autoSpeed;
+      } else {
+        nextX = group.current.position.x;
+        nextZ = group.current.position.z;
+      }
+    } else {
+      // TELEOP: keyboard / joystick
+      if (controlsEnabled) {
+        if (controls.forward) speed = WALK_SPEED;
+        if (controls.backward) speed = -WALK_SPEED;
+
+        const analogTurn = getMobileTurnAmount();
+        if (Math.abs(speed) > 0.1 && analogTurn !== null) {
+          facingAngle.current += TURN_SPEED * analogTurn * delta;
+        } else if (Math.abs(speed) > 0.1) {
+          if (controls.left) facingAngle.current += TURN_SPEED * delta;
+          if (controls.right) facingAngle.current -= TURN_SPEED * delta;
+        }
+      }
+      const moveDist = speed * delta;
+      nextX = group.current.position.x - Math.sin(facingAngle.current) * moveDist;
+      nextZ = group.current.position.z - Math.cos(facingAngle.current) * moveDist;
     }
 
     // Update animation state only on change to prevent re-triggering effect
     const isMovingNow = Math.abs(speed) > 0.1;
     if (isMovingNow !== moving) setMoving(isMovingNow);
 
-    // --- 2. PHYSICS ---
-    const moveDist = speed * delta;
-    const vx = Math.sin(facingAngle.current) * moveDist;
-    const vz = Math.cos(facingAngle.current) * moveDist;
-
-    let nextX = group.current.position.x - vx;
-    let nextZ = group.current.position.z - vz;
-
-    // --- 3. ROBUST GROUND DETECTION ---
-    // Terrain may not be in the scene yet (loads ~2s after the dog model).
-    // Skip physics entirely until it exists so gravity cannot accumulate and
-    // trigger the respawn loop before the floor is present.
-    const terrainGroup = globalScene.getObjectByName('world-terrain');
-    if (!terrainGroup) {
+    // --- 3. GROUND DETECTION (BVH collision, see services/collision.ts) ---
+    // Collision meshes register once the factory model has loaded (~2s after
+    // the dog). Skip physics until then so gravity cannot accumulate and
+    // trigger the respawn loop before the floor exists.
+    if (!isCollisionReady()) {
         velocityY.current = 0;
         return;
     }
@@ -241,42 +311,62 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
 
     let nextY = group.current.position.y + velocityY.current * delta;
 
-    {
-        // Cast ray from center, but slightly elevated
-        const rayOrigin = new Vector3(nextX, nextY + 15.0, nextZ);
-        raycaster.current.set(rayOrigin, downVector.current);
-
-        const intersects = raycaster.current.intersectObject(terrainGroup, true);
-
-        if (intersects.length > 0) {
-            const hit = intersects[0];
-            const groundHeight = hit.point.y;
-            const distToGround = nextY - groundHeight;
-
-            // Falling?
-            const isFalling = distToGround > 1.0;
-
-            // Collision with Wall
-            if (!isFalling && groundHeight > nextY + MAX_STEP_HEIGHT) {
-                nextX = group.current.position.x;
-                nextZ = group.current.position.z;
-            }
-            // Snap to Ground
-            else if (distToGround <= 0.5 && distToGround > -3.0) {
-                nextY = groundHeight;
-                velocityY.current = 0;
-                isGrounded.current = true;
-            } else {
-                isGrounded.current = false;
-            }
-        } else {
-            isGrounded.current = false;
-        }
+    // Cast down from GROUND_CLEARANCE above the feet at the proposed XZ. The
+    // origin sits below any roof/catwalk overhead, so the first hit is always
+    // the walkable floor — overhead geometry can no longer shadow the ground
+    // ray and let the dog sink through the real floor.
+    const groundY = groundHeightAt(nextX, group.current.position.y, nextZ, GROUND_CLEARANCE);
+    if (groundY !== null && nextY - groundY <= GROUND_SNAP_DIST) {
+        // On the floor, clipped slightly below it, or facing a climbable step
+        nextY = groundY;
+        velocityY.current = 0;
+        isGrounded.current = true;
+    } else {
+        isGrounded.current = false;
     }
 
+    // --- WALL COLLISION (double-sided BVH rays at two heights) ---
+    // Cast in the movement direction. If a wall is within WALL_DETECT_DIST,
+    // try to slide along X or Z instead of stopping cold.
+    const moveX = nextX - group.current.position.x;
+    const moveZ = nextZ - group.current.position.z;
+    const moveLen = Math.hypot(moveX, moveZ);
+
+    if (moveLen > 0.001) {
+      const pos = group.current.position;
+      const far = WALL_DETECT_DIST + moveLen;
+
+      const blockedInDir = (dx: number, dz: number): boolean => {
+        wallRayDir.current.set(dx, 0, dz);
+        for (const h of WALL_RAY_HEIGHTS) {
+          wallRayOrigin.current.set(pos.x, pos.y + h, pos.z);
+          const dist = raycastCollision(wallRayOrigin.current, wallRayDir.current, far);
+          if (dist !== null && dist < WALL_DETECT_DIST) return true;
+        }
+        return false;
+      };
+
+      if (blockedInDir(moveX / moveLen, moveZ / moveLen)) {
+        const xBlocked = Math.abs(moveX) > 0.001 ? blockedInDir(Math.sign(moveX), 0) : true;
+        const zBlocked = Math.abs(moveZ) > 0.001 ? blockedInDir(0, Math.sign(moveZ)) : true;
+
+        if (!xBlocked) {
+          nextZ = group.current.position.z;       // slide along X axis
+        } else if (!zBlocked) {
+          nextX = group.current.position.x;       // slide along Z axis
+        } else {
+          nextX = group.current.position.x;       // fully blocked
+          nextZ = group.current.position.z;
+        }
+      }
+    }
+
+    // Hard world boundary — prevents walking off the edge of the loaded terrain
+    nextX = Math.max(-WORLD_BOUND, Math.min(WORLD_BOUND, nextX));
+    nextZ = Math.max(-WORLD_BOUND, Math.min(WORLD_BOUND, nextZ));
+
     // Respawn at starting position if fallen off the world
-    // Set threshold very low to avoid respawning during normal gameplay
-    if (nextY < -50) {
+    if (nextY < VOID_THRESHOLD) {
         nextY = initialPosition.current[1];
         nextX = initialPosition.current[0];
         nextZ = initialPosition.current[2];
@@ -293,16 +383,18 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
     dummyObj.current.position.copy(group.current.position);
     dummyObj.current.up.set(0, 1, 0);
     
-    const lookTarget = new Vector3(
+    lookTarget.current.set(
         nextX - Math.sin(facingAngle.current),
         nextY,
         nextZ - Math.cos(facingAngle.current)
     );
-    
-    dummyObj.current.lookAt(lookTarget);
+
+    dummyObj.current.lookAt(lookTarget.current);
     group.current.quaternion.slerp(dummyObj.current.quaternion, delta * 15);
 
-    onSpeedChange(Math.abs(speed));
+    // Quantize to 0.5 steps: raw AUTO speed varies every frame, and each new
+    // value re-renders the whole App tree (HUD, overlays) at 60fps
+    onSpeedChange(Math.round(Math.abs(speed) * 2) / 2);
 
     // --- 8. CAMERA ---
     let panX = 0, panY = 0;
@@ -317,12 +409,11 @@ export const RoboticDog: React.FC<RoboticDogProps> = ({
     const cz = nextZ + Math.cos(facingAngle.current) * CAMERA_DISTANCE;
     targetCameraPos.current.set(cx, nextY + CAMERA_HEIGHT, cz);
     camera.position.lerp(targetCameraPos.current, CAMERA_SMOOTHNESS);
-    const focusPoint = group.current.position.clone();
-    focusPoint.y += 2.0;
-    focusPoint.x += Math.cos(facingAngle.current) * panX * 5;
-    focusPoint.z += -Math.sin(facingAngle.current) * panX * 5;
-    focusPoint.y += panY * 5;
-    camera.lookAt(focusPoint);
+    focusPoint.current.copy(group.current.position);
+    focusPoint.current.y += 2.0 + panY * 5;
+    focusPoint.current.x += Math.cos(facingAngle.current) * panX * 5;
+    focusPoint.current.z += -Math.sin(facingAngle.current) * panX * 5;
+    camera.lookAt(focusPoint.current);
   });
 
   return (

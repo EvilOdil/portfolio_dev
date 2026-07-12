@@ -31,10 +31,10 @@ const DefaultZoneModel: React.FC<ZoneModelProps> = ({ color, offset }) => {
       {/* The Box */}
       <mesh ref={meshRef} position={[0, 3.5, 0]} castShadow>
         <boxGeometry args={[4, 4, 4]} />
-        <meshStandardMaterial 
-          color={color} 
+        <meshStandardMaterial
+          color={color}
           emissive={color}
-          emissiveIntensity={0.5}
+          emissiveIntensity={0.9}
           transparent
           opacity={0.8}
           roughness={0.1}
@@ -44,12 +44,12 @@ const DefaultZoneModel: React.FC<ZoneModelProps> = ({ color, offset }) => {
 
       {/* Ground marker */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
-        <ringGeometry args={[3, 3.5, 32]} />
+        <ringGeometry args={[3, 3.5, 16]} />
         <meshBasicMaterial color={color} />
       </mesh>
-      
-      {/* Light for this zone */}
-      <pointLight position={[0, 5, 0]} distance={15} intensity={2} color={color} />
+      {/* No per-zone pointLight: 8 dynamic lights multiplied fragment cost
+          across every standard material in the scene. The box's emissive
+          material provides the glow instead. */}
     </group>
   );
 };

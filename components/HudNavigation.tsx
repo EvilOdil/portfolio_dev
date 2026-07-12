@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { PortfolioSection } from '../types';
 import { PORTFOLIO_DATA } from '../services/portfolioData';
 
@@ -89,17 +89,17 @@ export const HudNavigation: React.FC<HudNavigationProps> = ({
     updatePlayhead(e.clientX);
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
     updatePlayhead(e.clientX);
-  };
+  }, [isDragging]);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     if (isDragging && zones[activeTickIndex]) {
       onTeleport(zones[activeTickIndex].id);
     }
     setIsDragging(false);
-  };
+  }, [isDragging, activeTickIndex, zones, onTeleport]);
 
   const handleTickClick = (index: number) => {
     setActiveTickIndex(index);
@@ -108,14 +108,17 @@ export const HudNavigation: React.FC<HudNavigationProps> = ({
     }
   };
 
+  // Listeners are only needed while dragging — attaching permanently meant
+  // re-registering on every activeTickIndex change
   useEffect(() => {
+    if (!isDragging) return;
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, activeTickIndex]);
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   // Calculate playhead position
   const playheadPercent = zones.length > 1 ? (activeTickIndex / (zones.length - 1)) * 100 : 0;

@@ -44,7 +44,8 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
     id: 'experience',
     title: 'Experience',
     color: '#FF8800', // Warning Orange
-    position: [-40, 4, 0],
+    // Tour stop 2: ramp bottom, entry to the southern floor (floor ≈2.3)
+    position: [0, 2.5, -5],
     items: [
       {
         title: 'Chief Technology Officer',
@@ -72,7 +73,11 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
     id: 'publications',
     title: 'Publications',
     color: '#9B59B6', // Purple
-    position: [40, 4, -20],
+    // Tour stop 3: southern floor, west side (floor ≈1.3). Zones are laid out
+    // along one continuous AUTO-tour sweep — hall → west door → ramp →
+    // serpentine across the southern floor/yard → slope + flat gate at
+    // cell 40,20 → raised east floor.
+    position: [0, 2, 40],
     items: [
       {
         title: 'Coming Soon',
@@ -84,7 +89,8 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
     id: 'projects',
     title: 'Projects',
     color: '#E0E0E0', // Off-White (High Contrast)
-    position: [0, 2.5, -5],
+    // Tour stop 4: south yard (floor ≈1.4)
+    position: [8, 2, 70],
     items: [
       {
         title: 'Obo Mouse v1.0, v2.0',
@@ -143,7 +149,8 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
     id: 'education',
     title: 'Education',
     color: '#A0A0A0', // Muted Grey
-    position: [-50, 4, 30],
+    // Tour stop 5: southern floor, east part (floor ≈1.6)
+    position: [30, 2, 30],
     items: [
       {
         title: 'University of Moratuwa',
@@ -161,7 +168,9 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
     id: 'achievements',
     title: 'Awards',
     color: '#FFFFFF', // Pure White
-    position: [30, 2, 30],
+    // Tour stop 6: main hall, east side — just inside the 40,20 gate
+    // (floor ≈3.7)
+    position: [24, 4, -28],
     items: [
       {
         title: 'Champions - SPARK Challenge',
@@ -189,7 +198,9 @@ export const PORTFOLIO_DATA: PortfolioSection[] = [
     id: 'speeches',
     title: 'Speeches',
     color: '#00A3FF', // Tech Blue
-    position: [0, 2, 40],
+    // Tour stop 7: raised east floor, midway between Awards and Blog
+    // (floor ≈3.8)
+    position: [46, 4, -8],
     items: [
       {
         title: 'Coming Soon',

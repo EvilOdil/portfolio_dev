@@ -56,98 +56,90 @@ describe('Per-frame heap allocations in useFrame loops', () => {
   });
 
   it('InteractionManager: should not allocate new Vector3 per zone per frame', () => {
-    const code = src('App.tsx');
-    // Line 32: `new Vector3(...zone.position)` inside useFrame for EACH zone
-    // With 8 zones, this is 8 allocations * 60fps = 480 allocs/sec
+    const code = src('components/ThreeScene.tsx');
+    // `new Vector3(...zone.position)` inside useFrame for EACH zone would be
+    // 8 allocations × 60fps = 480 allocs/sec. Zone positions must be
+    // pre-computed once.
     const interactionBlock = code.slice(
-      code.indexOf('InteractionManager'),
+      code.indexOf('const InteractionManager'),
       code.indexOf('return null;')
     );
     expect(
       interactionBlock.includes('new Vector3('),
-      'InteractionManager allocates new Vector3 per zone per frame (8 zones × 60fps = 480 allocs/sec). ' +
+      'InteractionManager allocates new Vector3 per zone per frame. ' +
       'Pre-compute zone positions as Vector3 refs.'
     ).toBe(false);
   });
 });
 
 // ===========================================================================
-// 2. COLLISION SYSTEM GAPS (robot falls through walls)
+// 2. COLLISION SYSTEM (robot falls through floor / walks through walls)
 // ===========================================================================
 describe('Collision detection completeness', () => {
-  it('RoboticDog: should have horizontal raycasts for wall collision', () => {
-    const code = src('components/RoboticDog.tsx');
-    // Currently only casts downward rays. Walls approached horizontally are invisible.
-    const hasHorizontalRay =
-      code.includes('rayDirVec') ||
-      code.includes('horizontalRay') ||
-      // Check for any ray direction that isn't purely downward
-      /raycaster.*\.set\([^)]*new Vector3\(\s*[^0][^,]*,\s*0/m.test(code);
+  it('collision module: uses a BVH acceleration structure (three-mesh-bvh)', () => {
+    const code = src('services/collision.ts');
+    // Brute-force Raycaster.intersectObject against the 6MB factory model
+    // tests every triangle per ray. BVH turns that into a tree descent.
+    expect(code.includes('three-mesh-bvh') && code.includes('MeshBVH')).toBe(true);
+  });
 
+  it('collision module: raycasts are double-sided so FrontSide materials cannot hide walls', () => {
+    const code = src('services/collision.ts');
+    // Render materials use FrontSide (z-fighting fix in FactoryWorld). A
+    // side-respecting raycast would make walls with away-facing normals
+    // walk-through. Collision must pass DoubleSide to the BVH raycast.
+    expect(code.includes('DoubleSide')).toBe(true);
+  });
+
+  it('RoboticDog: has horizontal wall raycasts at multiple heights', () => {
+    const code = src('components/RoboticDog.tsx');
+    // A single ray at one height misses railings, window gaps, and corners.
+    const match = code.match(/WALL_RAY_HEIGHTS\s*=\s*\[([^\]]*)\]/);
+    const heightCount = match ? match[1].split(',').length : 0;
     expect(
-      hasHorizontalRay,
-      'No horizontal raycasts exist. The robot can walk straight through vertical walls ' +
-      'because only downward rays are cast. Add forward/sideways collision rays.'
-    ).toBe(true);
+      heightCount,
+      'Wall collision needs rays at 2+ heights above MAX_STEP_HEIGHT.'
+    ).toBeGreaterThanOrEqual(2);
   });
 
-  it('RoboticDog: should clamp per-frame movement to prevent tunneling', () => {
+  it('RoboticDog: ground ray originates just above step height, not high overhead', () => {
     const code = src('components/RoboticDog.tsx');
-    // At low FPS, speed*delta can exceed wall thickness, skipping through geometry.
-    // WALK_SPEED=12, at 10fps → delta=0.1 → moveDist=1.2 units/frame
-    const hasMoveClamping =
-      code.includes('MAX_MOVE_PER_FRAME') ||
-      code.includes('Math.min(Math.abs(') && code.includes('moveDist');
-
+    // A ray cast from +15 above the dog hits roofs/catwalks instead of the
+    // floor beneath, so the snap branch never fires and the dog sinks through
+    // the floor. The origin must sit below ceilings: MAX_STEP_HEIGHT + ε.
+    expect(code.includes('GROUND_CLEARANCE')).toBe(true);
     expect(
-      hasMoveClamping,
-      'No per-frame movement clamping. At low FPS (10fps), the robot moves 1.2 units/frame, ' +
-      'enough to tunnel through thin walls. Clamp moveDist to ~0.8 units.'
-    ).toBe(true);
+      /nextY\s*\+\s*15/.test(code),
+      'Ground ray must not originate 15 units overhead — roofs shadow the floor.'
+    ).toBe(false);
   });
 
-  it('RoboticDog: ground snap range should catch sub-ground clips', () => {
+  it('RoboticDog: clamps delta so a stalled frame cannot tunnel through geometry', () => {
     const code = src('components/RoboticDog.tsx');
-    // Check for either a literal value >= -5.0 or a named constant (GROUND_SNAP_RANGE)
-    const literalMatch = code.match(/distToGround\s*>\s*(-[\d.]+)/);
-    const hasConstant = code.includes('GROUND_SNAP_RANGE');
-
-    if (hasConstant) {
-      // If using a constant, check its value
-      const constMatch = code.match(/GROUND_SNAP_RANGE\s*=\s*(-[\d.]+)/);
-      const snapRange = constMatch ? parseFloat(constMatch[1]) : 0;
-      expect(
-        snapRange,
-        `GROUND_SNAP_RANGE is ${snapRange}. Should be at least -5.0.`
-      ).toBeLessThanOrEqual(-5.0);
-    } else {
-      const snapRange = literalMatch ? parseFloat(literalMatch[1]) : 0;
-      expect(
-        snapRange,
-        `Ground snap range is ${snapRange}. Should be at least -5.0.`
-      ).toBeLessThanOrEqual(-5.0);
-    }
+    // WALK_SPEED=12 at 10fps → 1.2 units/frame, enough to skip a thin wall.
+    // Clamping delta to 1/30 caps movement at 0.4 units/frame.
+    expect(code.includes('Math.min(delta, 1 / 30)')).toBe(true);
   });
 
-  it('RoboticDog: void respawn threshold should be higher than -50', () => {
+  it('RoboticDog: snaps up from sub-ground clips (no lower snap bound)', () => {
     const code = src('components/RoboticDog.tsx');
-    // Check for literal or constant-based threshold
-    const hasConstant = code.includes('VOID_THRESHOLD');
-    if (hasConstant) {
-      const constMatch = code.match(/VOID_THRESHOLD\s*=\s*(-[\d.]+)/);
-      const threshold = constMatch ? parseFloat(constMatch[1]) : -50;
-      expect(
-        threshold,
-        `VOID_THRESHOLD is ${threshold}. Should be -20 or higher.`
-      ).toBeGreaterThanOrEqual(-20);
-    } else {
-      const match = code.match(/nextY\s*<\s*(-[\d.]+)/);
-      const threshold = match ? parseFloat(match[1]) : -50;
-      expect(
-        threshold,
-        `Void threshold is ${threshold}. Should be -20 or higher.`
-      ).toBeGreaterThanOrEqual(-20);
-    }
+    // The old snap window (distToGround > -3.0) let a dog embedded deeper
+    // than 3 units keep falling. Snapping must have no lower bound.
+    expect(code.includes('GROUND_SNAP_DIST')).toBe(true);
+    expect(
+      /distToGround\s*>\s*-[\d.]+/.test(code),
+      'Snap logic must not have a lower distToGround bound.'
+    ).toBe(false);
+  });
+
+  it('RoboticDog: void respawn threshold should be -20 or higher', () => {
+    const code = src('components/RoboticDog.tsx');
+    const constMatch = code.match(/VOID_THRESHOLD\s*=\s*(-[\d.]+)/);
+    const threshold = constMatch ? parseFloat(constMatch[1]) : -50;
+    expect(
+      threshold,
+      `VOID_THRESHOLD is ${threshold}. Should be -20 or higher so falls respawn quickly.`
+    ).toBeGreaterThanOrEqual(-20);
   });
 });
 
@@ -249,22 +241,14 @@ describe('Three.js scene optimization', () => {
     ).toBe(false);
   });
 
-  it('FactoryScenery: SiloGroup should share geometry/material', () => {
-    const code = src('components/FactoryScenery.tsx');
-    // SiloGroup creates 3 separate meshes with identical geometry and material.
-    // These should use Instances (like DistantBuildings does).
-    const siloBlock = code.slice(
-      code.indexOf('const SiloGroup'),
-      code.indexOf('const OverheadBeam')
-    );
-    const meshCount = (siloBlock.match(/<mesh/g) || []).length;
-    const usesInstances = siloBlock.includes('<Instance');
-
-    expect(
-      usesInstances || meshCount <= 1,
-      `SiloGroup creates ${meshCount} separate meshes with identical geometry/material. ` +
-      'Use <Instances> like DistantBuildings to share GPU resources.'
-    ).toBe(true);
+  it('unused scenery components stay deleted (dead code)', () => {
+    // Car.tsx, Ground.tsx and FactoryScenery.tsx were unreferenced dead code
+    for (const dead of ['components/FactoryScenery.tsx', 'components/Ground.tsx']) {
+      expect(
+        fs.existsSync(path.resolve(__dirname, '..', dead)),
+        `${dead} is dead code that was removed — do not reintroduce without wiring it up.`
+      ).toBe(false);
+    }
   });
 
   it('Zone ringGeometry should use fewer segments', () => {
@@ -285,18 +269,16 @@ describe('Three.js scene optimization', () => {
 // 7. SCENE LOOKUP PERFORMANCE
 // ===========================================================================
 describe('Scene graph lookups', () => {
-  it('RoboticDog: should not call getObjectByName every frame unconditionally', () => {
+  it('RoboticDog: should not traverse the scene graph every frame', () => {
     const code = src('components/RoboticDog.tsx');
     const useFrameBody = code.slice(code.indexOf('useFrame('));
-    // getObjectByName should be cached behind a ref check, not called unconditionally.
-    // Acceptable: `if (!terrainRef.current) { terrainRef.current = globalScene.getObjectByName(...) }`
-    // Not acceptable: `const terrainGroup = globalScene.getObjectByName(...)` every frame
-    const hasCachedLookup = code.includes('terrainRef') && useFrameBody.includes('terrainRef.current');
-    const hasUnconditionalLookup = /const terrainGroup\s*=\s*globalScene\.getObjectByName/.test(useFrameBody);
+    // The collision module keeps its own mesh registry; the physics loop
+    // must not walk the scene graph (getObjectByName) per frame.
     expect(
-      hasCachedLookup && !hasUnconditionalLookup,
-      'getObjectByName should be cached in a ref, not called unconditionally every frame.'
-    ).toBe(true);
+      useFrameBody.includes('getObjectByName'),
+      'getObjectByName inside useFrame walks the scene graph every frame. ' +
+      'Query the collision module registry instead.'
+    ).toBe(false);
   });
 });
 

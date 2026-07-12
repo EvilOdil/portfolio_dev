@@ -38,8 +38,8 @@ export default function MobilePanTilt({ onPanTilt }: { onPanTilt: (dx: number, d
       onTouchEnd={handleTouchEnd}
       style={{
         position: 'absolute',
-        bottom: 32,
-        right: 32,
+        bottom: 'calc(32px + env(safe-area-inset-bottom, 0px))',
+        right: 'calc(24px + env(safe-area-inset-right, 0px))',
         width: 80,
         height: 80,
         borderRadius: '50%',

@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -r \"cannon\\\\|rapier\\\\|physics\\\\|Collider\\\\|RigidBody\\\\|usePhysics\\\\|useFixed\" /home/odilj/Documents/portfolio_dev --include=\"*.tsx\" --include=\"*.ts\" --include=\"*.jsx\" --include=\"*.js\" 2>/dev/null | head -20)",
+      "Bash(source ~/.nvm/nvm.sh 2>/dev/null; which node; npm run build 2>&1)",
+      "Read(//home/odilj/.nvm/versions/**)",
+      "Read(//usr/local/bin/**)",
+      "Read(//home/odilj/**)",
+      "Read(//usr/**)",
+      "Bash(npm test:*)",
+      "Bash(ffmpeg -i \"/home/odilj/Videos/Screencasts/Screencast from 2026-04-16 02-15-01.mp4\" -vf \"fps=1\" -frames:v 8 /tmp/frame_%02d.png)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(npm install *)",
+      "Read(//tmp/**)",
+      "Bash(node -e \"console.log\\(require\\('/home/odilj/Documents/portfolio_dev/node_modules/three-mesh-bvh/package.json'\\).version, require\\('/home/odilj/Documents/portfolio_dev/node_modules/three-mesh-bvh/package.json'\\).peerDependencies.three\\)\")",
+      "Bash(npx vitest *)",
+      "Bash(npx tsx *)",
+      "Bash(node *)",
+      "Bash(awk 'NR%2==1')",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
+    ]
+  }
+}

@@ -79,6 +79,7 @@ const App: React.FC = () => {
       <Suspense fallback={null}>
         <ThreeScene
           isMobile={isMobile}
+          selectedMode={selectedMode}
           controlsEnabled={controlsEnabled}
           teleportTarget={teleportTarget}
           onSpeedChange={setSpeed}

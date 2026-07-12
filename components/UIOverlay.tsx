@@ -31,11 +31,9 @@ export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZ
   const filteredProjects = (items: PortfolioItem[]) => {
     // Only filter if we're in the projects section and have tags selected
     if (activeZone?.id !== 'projects' || selectedTags.length === 0) return items;
-    const filtered = items.filter(item => 
+    return items.filter(item =>
       item.tags && item.tags.some(tag => selectedTags.includes(tag))
     );
-    console.log('Filtering projects:', { selectedTags, itemCount: items.length, filteredCount: filtered.length });
-    return filtered;
   };
 
   // Load markdown content when a project is selected
@@ -888,7 +886,7 @@ export const UIOverlay: React.FC<UIOverlayProps> = ({ speed, nearbyZone, activeZ
                   <div className="flex justify-between items-center py-2">
                      <span className="font-code text-xs text-muted-grey">ACCESS DATA?</span>
                      <button
-                       className="bg-safety-yellow text-black px-2 py-1 font-bold font-tech text-xs tracking-widest rounded hover:bg-yellow-300 transition-colors cursor-pointer"
+                       className="bg-safety-yellow text-black px-5 py-2.5 font-bold font-tech text-sm tracking-widest rounded hover:bg-yellow-300 transition-colors cursor-pointer"
                        onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))}
                      >ENTER</button>
                   </div>

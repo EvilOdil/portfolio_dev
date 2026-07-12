@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { Mesh, Box3, Vector3, Group, FrontSide } from 'three';
+import { registerCollisionRoot, clearCollisionMeshes } from '../services/collision';
 
 export const FactoryWorld: React.FC = () => {
   // Load the custom world asset
@@ -11,10 +12,13 @@ export const FactoryWorld: React.FC = () => {
   useEffect(() => {
     if (!scene) return;
 
-    // 1. Enable Shadows & Fix Materials
+    // 1. Shadows & Fix Materials.
+    // The factory only RECEIVES shadows: letting its ~214k triangles cast
+    // meant re-rendering the whole model into the shadow map every frame
+    // for barely visible self-shadowing. The dog remains the only caster.
     scene.traverse((child) => {
       if ((child as Mesh).isMesh) {
-        child.castShadow = true;
+        child.castShadow = false;
         child.receiveShadow = true;
         
         // Fix potential dark materials
@@ -41,17 +45,12 @@ export const FactoryWorld: React.FC = () => {
     const center = new Vector3();
     box.getCenter(center);
 
-    console.log("Model Original Size:", size);
-    console.log("Model Original Center:", center);
-
     // Desired width for the game world (approx 200 units for driving space)
     const TARGET_SIZE = 300;
     const maxDim = Math.max(size.x, size.z); // Base scale on floor area
-    
+
     // Protect against empty models or div by zero
     const scaleFactor = maxDim > 0 ? TARGET_SIZE / maxDim : 1;
-    
-    console.log("Applied Scale Factor:", scaleFactor);
 
     scene.scale.setScalar(scaleFactor);
 
@@ -65,6 +64,13 @@ export const FactoryWorld: React.FC = () => {
     scene.position.z = -center.z * scaleFactor;
     scene.position.y = -box.min.y * scaleFactor;
 
+    // Build BVH collision data for everything under the terrain group (the
+    // factory model + the invisible ground plane). Must run after the
+    // transforms above so the cached world matrices are final.
+    if (groupRef.current) {
+      registerCollisionRoot(groupRef.current);
+    }
+    return () => clearCollisionMeshes();
   }, [scene]);
 
   return (
